@@ -42,7 +42,12 @@ export interface Destination {
   /** Cuerpo celeste real al que pertenece el destino. */
   bodyId: Exclude<CelestialBodyId, 'sun' | 'earth'>
   kind: DestinationKind
+  /** Nombre completo, p. ej. "Saturn — Ring Observation". */
   name: string
+  /** Cuerpo, p. ej. "Saturn". */
+  bodyName: string
+  /** Experiencia, p. ej. "Ring Observation". */
+  experienceName: string
   tagline: string
   description: string
   /** `true` si la instalación/experiencia es ficción (estaciones, colonias). */

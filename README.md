@@ -3,7 +3,7 @@
 Experiencia web 3D ficticia de turismo espacial (React + Three.js + WebGL).
 Plan completo: [`SOLARIS_ENGINEERING_PLAN.md`](./SOLARIS_ENGINEERING_PLAN.md).
 
-**Estado:** FASE 0 — arquitectura y configuración (escena placeholder).
+**Estado:** FASE 1 — sistema visual y UI HUD (sobre escena placeholder).
 
 ## Requisitos
 
@@ -45,6 +45,14 @@ React 19 · TypeScript (strict) · Vite · Three.js · React Three Fiber 9 ·
 - `engine/planets/PlaceholderPlanet.tsx` — esfera plana → Tierra real en FASE 2A.
 - `engine/particles/PlaceholderStars.tsx` — estrellas de drei.
 - `hooks/usePlaceholderTransition.ts` — temporizador → timelines GSAP en FASE 3.
-- `components/navigation/StateDebugPanel.tsx` — controles de depuración → HUD en FASE 1.
-- `components/loading/LoadingScreen.tsx` — versión básica → diseño final en FASE 1.
+- `data/tiers.ts` — categorías genéricas con datos ficticios → catálogo por destino en FASE 5.
+
+## UI (FASE 1)
+
+- `components/ui/` — `Button`, `Badge`, `DataReadout`, `Fade`, `Modal` (reutilizables).
+- `components/layout/` — `Header`, `HeroOverlay`, `Logo`.
+- `components/hud/DestinationHud.tsx` — datos del destino (izquierda).
+- `components/packages/` — `CommercialPanel`, `TierCard`, `BookingModal` (reserva demostrativa).
+- `components/destinations/DestinationBar.tsx` — barra inferior de destinos.
+- `stores/ui.store.ts` — estado solo de interfaz (categoría, modal, bottom sheet).
 

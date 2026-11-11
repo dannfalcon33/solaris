@@ -5,7 +5,7 @@ import type { DestinationId, NavigationState } from '@/types'
 interface NavigationStore {
   /** Estado actual de la experiencia. */
   state: NavigationState
-  /** Destino seleccionado (o al que se viaja). */
+  /** Último destino seleccionado (o al que se viaja). */
   selectedDestinationId: DestinationId | null
   /** `true` mientras hay una transición de cámara en curso. */
   isTransitioning: boolean
@@ -64,14 +64,18 @@ export const useNavigationStore = create<NavigationStore>((set, get) => ({
     })
   },
 
+  // Se conserva `selectedDestinationId` (último destino visitado) para que la
+  // UI pueda animar su salida sin perder el contenido.
   returnToSolarSystem: () => {
-    if (get().isTransitioning) return
-    set({ state: 'solar_system', selectedDestinationId: null })
+    const { isTransitioning, state } = get()
+    if (isTransitioning || state === 'loading') return
+    set({ state: 'solar_system' })
   },
 
   returnToEarth: () => {
-    if (get().isTransitioning) return
-    set({ state: 'earth_hero', selectedDestinationId: null })
+    const { isTransitioning, state } = get()
+    if (isTransitioning || state === 'loading') return
+    set({ state: 'earth_hero' })
   },
 }))
 

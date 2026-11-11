@@ -11,6 +11,39 @@
 
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pulse-dot: pulse-dot 2.4s ease-in-out infinite;
+  --animate-spin-slow: spin 14s linear infinite;
+  --animate-scan: scan 2.4s linear infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes scan {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
 }
 
 html,
@@ -28,12 +61,60 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  background: rgba(0, 229, 195, 0.3);
+}
+
+/* Scrollbars discretas para paneles con desbordamiento */
+.hud-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 195, 0.35) transparent;
+}
+
+/* Panel HUD: fondo sobrio con esquinas marcadas (sin glassmorphism excesivo) */
+.hud-panel {
+  position: relative;
+  background: linear-gradient(180deg, rgba(7, 21, 26, 0.86), rgba(2, 6, 9, 0.9));
+  border: 1px solid rgba(0, 229, 195, 0.14);
+  backdrop-filter: blur(6px);
+}
+.hud-panel::before,
+.hud-panel::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 0 solid var(--color-teal);
+  opacity: 0.75;
+  pointer-events: none;
+}
+.hud-panel::before {
+  top: -1px;
+  left: -1px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+.hud-panel::after {
+  right: -1px;
+  bottom: -1px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+
+/* Degradado de legibilidad sobre el canvas, sin tapar los planetas */
+.scrim-top {
+  background: linear-gradient(180deg, rgba(2, 6, 9, 0.85), rgba(2, 6, 9, 0));
+}
+.scrim-bottom {
+  background: linear-gradient(0deg, rgba(2, 6, 9, 0.9), rgba(2, 6, 9, 0));
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
-

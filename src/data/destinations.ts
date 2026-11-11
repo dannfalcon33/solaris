@@ -10,6 +10,8 @@ export const destinations: readonly Destination[] = [
     bodyId: 'mercury',
     kind: 'planet',
     name: 'Mercury — Solar Frontier',
+    bodyName: 'Mercury',
+    experienceName: 'Solar Frontier',
     tagline: 'Expedición de superficie bajo el Sol más intenso',
     description:
       'Expedición ficticia a la superficie craterizada de Mercurio, el planeta más cercano al Sol.',
@@ -28,6 +30,8 @@ export const destinations: readonly Destination[] = [
     bodyId: 'venus',
     kind: 'station',
     name: 'Venus — Cloud Haven',
+    bodyName: 'Venus',
+    experienceName: 'Cloud Haven',
     tagline: 'Estación flotante en las capas altas de la atmósfera',
     description:
       'Estación turística ficticia suspendida en las capas altas de la atmósfera de Venus.',
@@ -46,6 +50,8 @@ export const destinations: readonly Destination[] = [
     bodyId: 'mars',
     kind: 'planet',
     name: 'Mars — Red Frontier',
+    bodyName: 'Mars',
+    experienceName: 'Red Frontier',
     tagline: 'Colonia y expedición de superficie',
     description:
       'Colonia y expedición ficticias sobre el terreno rojizo de Marte, con instalaciones de turismo.',
@@ -64,6 +70,8 @@ export const destinations: readonly Destination[] = [
     bodyId: 'jupiter',
     kind: 'station',
     name: 'Jupiter — Europa Orbital Station',
+    bodyName: 'Jupiter',
+    experienceName: 'Europa Orbital Station',
     tagline: 'Complejo orbital con vistas a las lunas galileanas',
     description:
       'Complejo ficticio en órbita de Júpiter, con vistas a sus lunas y a Europa.',
@@ -82,6 +90,8 @@ export const destinations: readonly Destination[] = [
     bodyId: 'saturn',
     kind: 'station',
     name: 'Saturn — Titan Orbital Station',
+    bodyName: 'Saturn',
+    experienceName: 'Titan Orbital Station',
     tagline: 'Complejo orbital con excursiones visuales a Titán',
     description:
       'Complejo ficticio en órbita de Saturno, con excursiones visuales hacia Titán.',
@@ -100,6 +110,8 @@ export const destinations: readonly Destination[] = [
     bodyId: 'saturn',
     kind: 'station',
     name: 'Saturn — Ring Observation',
+    bodyName: 'Saturn',
+    experienceName: 'Ring Observation',
     tagline: 'Observación de los anillos desde una instalación orbital',
     description:
       'Experiencia especializada de observación de los anillos de Saturno desde una instalación orbital ficticia.',
@@ -124,4 +136,3 @@ export const destinationsById: Readonly<Record<DestinationId, Destination>> =
 export function getDestination(id: DestinationId): Destination {
   return destinationsById[id]
 }
-
