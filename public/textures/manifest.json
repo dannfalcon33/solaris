@@ -1,0 +1,146 @@
+[
+  {
+    "group": "earth",
+    "tier": "2k",
+    "name": "day",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 221462
+  },
+  {
+    "group": "earth",
+    "tier": "4k",
+    "name": "day",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 741240
+  },
+  {
+    "group": "earth",
+    "tier": "8k",
+    "name": "day",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 2358688
+  },
+  {
+    "group": "earth",
+    "tier": "2k",
+    "name": "night",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 108082
+  },
+  {
+    "group": "earth",
+    "tier": "4k",
+    "name": "night",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 389078
+  },
+  {
+    "group": "earth",
+    "tier": "8k",
+    "name": "night",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 1185510
+  },
+  {
+    "group": "earth",
+    "tier": "2k",
+    "name": "clouds",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 623778
+  },
+  {
+    "group": "earth",
+    "tier": "4k",
+    "name": "clouds",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 2492430
+  },
+  {
+    "group": "earth",
+    "tier": "8k",
+    "name": "clouds",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 9072068
+  },
+  {
+    "group": "earth",
+    "tier": "2k",
+    "name": "normal",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 58874
+  },
+  {
+    "group": "earth",
+    "tier": "4k",
+    "name": "normal",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 381458
+  },
+  {
+    "group": "earth",
+    "tier": "8k",
+    "name": "normal",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 1976588
+  },
+  {
+    "group": "earth",
+    "tier": "2k",
+    "name": "specular",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 117164
+  },
+  {
+    "group": "earth",
+    "tier": "4k",
+    "name": "specular",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 294908
+  },
+  {
+    "group": "earth",
+    "tier": "8k",
+    "name": "specular",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 725454
+  },
+  {
+    "group": "sky",
+    "tier": "2k",
+    "name": "milkyway",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 36916
+  },
+  {
+    "group": "sky",
+    "tier": "4k",
+    "name": "milkyway",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 148578
+  },
+  {
+    "group": "sky",
+    "tier": "8k",
+    "name": "milkyway",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 425706
+  }
+]

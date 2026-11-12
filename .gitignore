@@ -1,5 +1,7 @@
 node_modules
 dist
+# Fuentes originales de texturas (ver docs/ASSETS.md); se regeneran con `npm run textures`
+assets-src
 *.local
 *.log
 .vite

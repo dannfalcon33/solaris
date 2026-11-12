@@ -1,8 +1,11 @@
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { PlaceholderPlanet } from '@/engine/planets/PlaceholderPlanet'
-import { PlaceholderStars } from '@/engine/particles/PlaceholderStars'
+import { HERO_CAMERA_Z, HERO_FOV } from '@/engine/camera/heroLayout'
+import { getQuality } from '@/engine/config/quality'
+import { PerfMonitor } from '@/engine/debug/PerfMonitor'
+import { Skybox } from '@/engine/environment/Skybox'
 import { SunLight } from '@/engine/lighting/SunLight'
+import { Earth } from '@/engine/planets/Earth'
 import { SceneReadyNotifier } from './SceneReadyNotifier'
 
 /**
@@ -10,22 +13,24 @@ import { SceneReadyNotifier } from './SceneReadyNotifier'
  * se comunica con la interfaz a través del store de navegación.
  */
 export function SceneCanvas() {
+  const quality = getQuality()
+
   return (
     <div className="fixed inset-0 z-0" aria-hidden="true">
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 500 }}
-        dpr={[1, 2]}
+        camera={{ position: [0, 0, HERO_CAMERA_Z], fov: HERO_FOV, near: 0.1, far: 2000 }}
+        dpr={[1, quality.maxDpr]}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#020609']} />
+        <PerfMonitor />
         <Suspense fallback={null}>
           <SunLight />
-          <PlaceholderStars />
-          <PlaceholderPlanet />
+          <Skybox />
+          <Earth />
           <SceneReadyNotifier />
         </Suspense>
       </Canvas>
     </div>
   )
 }
-
