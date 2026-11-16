@@ -5,7 +5,7 @@
     "name": "day",
     "width": 2048,
     "height": 1024,
-    "bytes": 221462
+    "bytes": 226730
   },
   {
     "group": "earth",
@@ -13,7 +13,7 @@
     "name": "day",
     "width": 4096,
     "height": 2048,
-    "bytes": 741240
+    "bytes": 767290
   },
   {
     "group": "earth",
@@ -21,7 +21,7 @@
     "name": "day",
     "width": 8192,
     "height": 4096,
-    "bytes": 2358688
+    "bytes": 2431616
   },
   {
     "group": "earth",
@@ -29,7 +29,7 @@
     "name": "night",
     "width": 2048,
     "height": 1024,
-    "bytes": 108082
+    "bytes": 111042
   },
   {
     "group": "earth",
@@ -37,7 +37,7 @@
     "name": "night",
     "width": 4096,
     "height": 2048,
-    "bytes": 389078
+    "bytes": 397676
   },
   {
     "group": "earth",
@@ -45,7 +45,7 @@
     "name": "night",
     "width": 8192,
     "height": 4096,
-    "bytes": 1185510
+    "bytes": 1248222
   },
   {
     "group": "earth",
@@ -53,7 +53,7 @@
     "name": "clouds",
     "width": 2048,
     "height": 1024,
-    "bytes": 623778
+    "bytes": 634112
   },
   {
     "group": "earth",
@@ -61,7 +61,7 @@
     "name": "clouds",
     "width": 4096,
     "height": 2048,
-    "bytes": 2492430
+    "bytes": 2528868
   },
   {
     "group": "earth",
@@ -69,7 +69,7 @@
     "name": "clouds",
     "width": 8192,
     "height": 4096,
-    "bytes": 9072068
+    "bytes": 9208954
   },
   {
     "group": "earth",
@@ -77,7 +77,7 @@
     "name": "normal",
     "width": 2048,
     "height": 1024,
-    "bytes": 58874
+    "bytes": 56666
   },
   {
     "group": "earth",
@@ -85,7 +85,7 @@
     "name": "normal",
     "width": 4096,
     "height": 2048,
-    "bytes": 381458
+    "bytes": 370508
   },
   {
     "group": "earth",
@@ -93,7 +93,7 @@
     "name": "normal",
     "width": 8192,
     "height": 4096,
-    "bytes": 1976588
+    "bytes": 1921158
   },
   {
     "group": "earth",
@@ -101,7 +101,7 @@
     "name": "specular",
     "width": 2048,
     "height": 1024,
-    "bytes": 117164
+    "bytes": 117576
   },
   {
     "group": "earth",
@@ -109,7 +109,7 @@
     "name": "specular",
     "width": 4096,
     "height": 2048,
-    "bytes": 294908
+    "bytes": 295478
   },
   {
     "group": "earth",
@@ -117,7 +117,7 @@
     "name": "specular",
     "width": 8192,
     "height": 4096,
-    "bytes": 725454
+    "bytes": 725124
   },
   {
     "group": "sky",
@@ -125,7 +125,7 @@
     "name": "milkyway",
     "width": 2048,
     "height": 1024,
-    "bytes": 36916
+    "bytes": 39954
   },
   {
     "group": "sky",
@@ -133,7 +133,7 @@
     "name": "milkyway",
     "width": 4096,
     "height": 2048,
-    "bytes": 148578
+    "bytes": 153454
   },
   {
     "group": "sky",
@@ -141,6 +141,198 @@
     "name": "milkyway",
     "width": 8192,
     "height": 4096,
-    "bytes": 425706
+    "bytes": 453630
+  },
+  {
+    "group": "sun",
+    "tier": "2k",
+    "name": "albedo",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 391030
+  },
+  {
+    "group": "sun",
+    "tier": "4k",
+    "name": "albedo",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 967008
+  },
+  {
+    "group": "sun",
+    "tier": "8k",
+    "name": "albedo",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 2532326
+  },
+  {
+    "group": "mercury",
+    "tier": "2k",
+    "name": "albedo",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 625914
+  },
+  {
+    "group": "mercury",
+    "tier": "4k",
+    "name": "albedo",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 2904310
+  },
+  {
+    "group": "mercury",
+    "tier": "8k",
+    "name": "albedo",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 13752520
+  },
+  {
+    "group": "venus",
+    "tier": "2k",
+    "name": "surface",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 455346
+  },
+  {
+    "group": "venus",
+    "tier": "4k",
+    "name": "surface",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 1984522
+  },
+  {
+    "group": "venus",
+    "tier": "8k",
+    "name": "surface",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 7487202
+  },
+  {
+    "group": "venus",
+    "tier": "2k",
+    "name": "atmosphere",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 66954
+  },
+  {
+    "group": "venus",
+    "tier": "4k",
+    "name": "atmosphere",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 282850
+  },
+  {
+    "group": "venus",
+    "tier": "8k",
+    "name": "atmosphere",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 760936
+  },
+  {
+    "group": "mars",
+    "tier": "2k",
+    "name": "albedo",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 323596
+  },
+  {
+    "group": "mars",
+    "tier": "4k",
+    "name": "albedo",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 1147652
+  },
+  {
+    "group": "mars",
+    "tier": "8k",
+    "name": "albedo",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 4518996
+  },
+  {
+    "group": "jupiter",
+    "tier": "2k",
+    "name": "albedo",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 210016
+  },
+  {
+    "group": "jupiter",
+    "tier": "4k",
+    "name": "albedo",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 719206
+  },
+  {
+    "group": "jupiter",
+    "tier": "8k",
+    "name": "albedo",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 1750156
+  },
+  {
+    "group": "saturn",
+    "tier": "2k",
+    "name": "albedo",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 56608
+  },
+  {
+    "group": "saturn",
+    "tier": "4k",
+    "name": "albedo",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 171206
+  },
+  {
+    "group": "saturn",
+    "tier": "8k",
+    "name": "albedo",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 505458
+  },
+  {
+    "group": "saturn",
+    "tier": "2k",
+    "name": "rings",
+    "width": 2048,
+    "height": 125,
+    "bytes": 8232
+  },
+  {
+    "group": "saturn",
+    "tier": "4k",
+    "name": "rings",
+    "width": 4096,
+    "height": 250,
+    "bytes": 20432
+  },
+  {
+    "group": "saturn",
+    "tier": "8k",
+    "name": "rings",
+    "width": 8192,
+    "height": 500,
+    "bytes": 55964
   }
 ]

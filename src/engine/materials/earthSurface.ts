@@ -78,17 +78,18 @@ const fragmentShader = /* glsl */ `
     vec3 L = normalize(uSunDir);
     vec3 V = normalize(cameraPosition - vWorldPos);
 
-    // --- Relieve ---
+    // --- Albedo, máscara oceánica y nubes ---
+    vec3 albedo = textureGrad(uDay, vUv, dx, dy).rgb;
+    float ocean = textureGrad(uSpecular, vUv, dx, dy).r;
+    float cover = textureGrad(uClouds, vUv, dx, dy).r;
+
+    // --- Relieve (atenuado sobre el océano para evitar artefactos de cuantización) ---
     vec3 mapN = textureGrad(uNormal, vUv, dx, dy).xyz * 2.0 - 1.0;
-    mapN.xy *= uNormalScale;
+    mapN.xy *= uNormalScale * (1.0 - ocean * 0.92);
     vec3 Nb = normalize(T * mapN.x + B * mapN.y + N * mapN.z);
 
     float ndlGeo = dot(N, L);
     float ndlBump = dot(Nb, L);
-
-    // --- Albedo y nubes ---
-    vec3 albedo = textureGrad(uDay, vUv, dx, dy).rgb;
-    float cover = textureGrad(uClouds, vUv, dx, dy).r;
 
     // Sombra de nubes: la nube que oculta el punto está desplazada hacia el Sol.
     float shadowK = 0.0026 / max(ndlGeo, 0.22);
@@ -102,11 +103,11 @@ const fragmentShader = /* glsl */ `
     vec3 color = albedo * uSunColor * diff * lit * shadow * 1.55;
     color += albedo * 0.006; // luz ambiente mínima (reflejo del espacio)
 
-    // --- Océano: brillo especular + reflejo solar ---
-    float ocean = textureGrad(uSpecular, vUv, dx, dy).r;
+    // --- Océano: brillo especular + reflejo solar suave (sin artefactos 8-bit) ---
     vec3 H = normalize(L + V);
-    float ndh = max(dot(Nb, H), 0.0);
-    float glint = pow(ndh, 140.0) * 2.2 + pow(ndh, 22.0) * 0.18;
+    vec3 Nocean = normalize(mix(N, Nb, 0.12));
+    float ndh = max(dot(Nocean, H), 0.0);
+    float glint = pow(ndh, 110.0) * 1.65 + pow(ndh, 18.0) * 0.22;
     color += uSunColor * glint * ocean * lit * (1.0 - cover * 0.9);
 
     // --- Velo atmosférico en el limbo (lado iluminado) ---

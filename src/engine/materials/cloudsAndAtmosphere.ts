@@ -1,4 +1,14 @@
-import { AdditiveBlending, BackSide, Color, FrontSide, NormalBlending, ShaderMaterial, type Texture } from 'three'
+import {
+  AdditiveBlending,
+  BackSide,
+  Color,
+  FrontSide,
+  NormalBlending,
+  ShaderMaterial,
+  type ColorRepresentation,
+  type Texture,
+  type Vector3,
+} from 'three'
 import { SUN_DIRECTION } from '@/engine/lighting/sun'
 import { SEAMLESS_GLSL } from './earthSurface'
 
@@ -50,7 +60,6 @@ const fragmentShader = /* glsl */ `
     vec3 T = normalize(vWorldTangent - N * dot(N, vWorldTangent));
     vec3 B = cross(N, T);
     vec3 L = normalize(uSunDir);
-    vec3 V = normalize(cameraPosition - vWorldPos);
 
     // Pseudo-normal: las zonas densas "sobresalen".
     vec3 Nc = normalize(N + (T * (c0 - cx) + B * (c0 - cy)) * 3.2);
@@ -75,7 +84,7 @@ const fragmentShader = /* glsl */ `
   }
 `
 
-export function createCloudMaterial(): ShaderMaterial {
+export function createCloudMaterial(sunDir: Vector3 = SUN_DIRECTION): ShaderMaterial {
   return new ShaderMaterial({
     vertexShader,
     fragmentShader,
@@ -85,7 +94,7 @@ export function createCloudMaterial(): ShaderMaterial {
     blending: NormalBlending,
     uniforms: {
       uClouds: { value: null },
-      uSunDir: { value: SUN_DIRECTION },
+      uSunDir: { value: sunDir },
       uSunColor: { value: new Color(1.0, 0.96, 0.9) },
       uTexel: { value: [1 / 2048, 1 / 1024] },
     },
@@ -104,8 +113,7 @@ export function setCloudTexture(material: ShaderMaterial, clouds: Texture): void
  * Atmósfera: cáscara exterior (BackSide) con aproximación analítica de
  * scattering. Para cada rayo se calcula la distancia mínima al centro del
  * planeta; la densidad decae exponencialmente con la altitud y se integra el
- * recorrido dentro de la cáscara. Azul Rayleigh en el lado diurno y banda
- * naranja en el terminador; sin borde "neón".
+ * recorrido dentro de la cáscara.
  */
 const atmoVertex = /* glsl */ `
   varying vec3 vWorldPos;
@@ -129,6 +137,9 @@ const atmoVertex = /* glsl */ `
 
 const atmoFragment = /* glsl */ `
   uniform vec3 uSunDir;
+  uniform vec3 uDayColor;
+  uniform vec3 uTermColor;
+  uniform vec3 uInnerColor;
   uniform float uIntensity;
   uniform float uScaleHeight;   // fracción del radio
 
@@ -159,12 +170,10 @@ const atmoFragment = /* glsl */ `
     float dayAmt = smoothstep(-0.28, 0.55, s);
     float term = exp(-pow(s / 0.20, 2.0));
 
-    vec3 blue = vec3(0.22, 0.50, 1.0);
-    vec3 warm = vec3(1.0, 0.46, 0.18);
-    vec3 col = mix(blue, warm, term * 0.75) * dayAmt;
+    vec3 col = mix(uDayColor, uTermColor, term * 0.75) * dayAmt;
 
     // Un poco más claro en el interior (menor altitud).
-    col = mix(col, vec3(0.55, 0.78, 1.0) * dayAmt, smoothstep(0.35, 0.0, h) * 0.35);
+    col = mix(col, uInnerColor * dayAmt, smoothstep(0.35, 0.0, h) * 0.35);
 
     // Atenuación de borde para que se funda con el espacio.
     float edge = 1.0 - smoothstep(vRp, vRa, d);
@@ -178,7 +187,18 @@ const atmoFragment = /* glsl */ `
 export const ATMOSPHERE_RADIUS = 1.07
 export const EARTH_RADIUS = 1.0
 
-export function createAtmosphereMaterial(): ShaderMaterial {
+export interface AtmosphereOptions {
+  sunDir?: Vector3
+  dayColor?: ColorRepresentation
+  terminatorColor?: ColorRepresentation
+  innerColor?: ColorRepresentation
+  intensity?: number
+  scaleHeight?: number
+  planetRadius?: number
+  atmoRadius?: number
+}
+
+export function createAtmosphereMaterial(opts: AtmosphereOptions = {}): ShaderMaterial {
   return new ShaderMaterial({
     vertexShader: atmoVertex,
     fragmentShader: atmoFragment,
@@ -187,11 +207,14 @@ export function createAtmosphereMaterial(): ShaderMaterial {
     side: BackSide,
     blending: AdditiveBlending,
     uniforms: {
-      uSunDir: { value: SUN_DIRECTION },
-      uPlanetRadius: { value: EARTH_RADIUS },
-      uAtmoRadius: { value: ATMOSPHERE_RADIUS },
-      uIntensity: { value: 1.35 },
-      uScaleHeight: { value: 0.022 },
+      uSunDir: { value: opts.sunDir ?? SUN_DIRECTION },
+      uDayColor: { value: new Color(opts.dayColor ?? new Color(0.22, 0.5, 1.0)) },
+      uTermColor: { value: new Color(opts.terminatorColor ?? new Color(1.0, 0.46, 0.18)) },
+      uInnerColor: { value: new Color(opts.innerColor ?? new Color(0.55, 0.78, 1.0)) },
+      uPlanetRadius: { value: opts.planetRadius ?? EARTH_RADIUS },
+      uAtmoRadius: { value: opts.atmoRadius ?? ATMOSPHERE_RADIUS },
+      uIntensity: { value: opts.intensity ?? 1.35 },
+      uScaleHeight: { value: opts.scaleHeight ?? 0.022 },
     },
   })
 }

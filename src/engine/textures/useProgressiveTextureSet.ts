@@ -12,14 +12,17 @@ const baseCache = new Map<string, Promise<unknown>>()
 
 /**
  * Carga progresiva: el nivel 2k se resuelve mediante Suspense (la pantalla de
- * carga espera por él) y, en segundo plano, se carga el nivel objetivo y se
- * intercambia sin parpadeo. El nivel base nunca se libera (sirve de fallback).
+ * carga espera por él) y, cuando `upgrade` está activo (p. ej. el planeta está
+ * en primer plano), se carga el nivel objetivo (4k/8k) en segundo plano y se
+ * intercambia sin parpadeo. Al dejar el primer plano se libera el nivel alto
+ * para mantener acotado el uso de VRAM.
  */
 export function useProgressiveTextureSet<K extends string>(
   group: string,
   specs: Record<K, TextureSpec>,
   target: TextureRes,
   anisotropy: number,
+  upgrade = true,
 ): { textures: TextureSet<K>; resolution: TextureRes } {
   let basePromise = baseCache.get(group) as Promise<TextureSet<K>> | undefined
   if (!basePromise) {
@@ -31,7 +34,7 @@ export function useProgressiveTextureSet<K extends string>(
   const [upgraded, setUpgraded] = useState<{ res: TextureRes; set: TextureSet<K> } | null>(null)
 
   useEffect(() => {
-    if (target === '2k') return
+    if (!upgrade || target === '2k') return
     let cancelled = false
     const t0 = performance.now()
     loadTextureSet(group, target, specs, anisotropy)
@@ -46,21 +49,21 @@ export function useProgressiveTextureSet<K extends string>(
       .catch((err) => console.warn(`[solaris] No se pudo cargar ${group}/${target}; se mantiene 2k`, err))
     return () => {
       cancelled = true
+      setUpgraded((prev) => {
+        if (prev) disposeTextureSet(prev.set)
+        return null
+      })
     }
     // `specs` es una constante de módulo en los llamadores.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [group, target, anisotropy])
+  }, [group, target, anisotropy, upgrade])
+
+  const active = upgrade && upgraded && upgraded.res === target ? upgraded : null
+  const resolution = active ? active.res : '2k'
 
   useEffect(() => {
-    const current = upgraded
-    return () => {
-      if (current) disposeTextureSet(current.set)
-    }
-  }, [upgraded])
+    debugStats.textureRes[group] = resolution
+  }, [group, resolution])
 
-  const active = upgraded && upgraded.res === target ? upgraded : null
-  const resolution = active ? active.res : '2k'
-  debugStats.textureRes[group] = resolution
   return { textures: active ? active.set : base, resolution }
 }
-

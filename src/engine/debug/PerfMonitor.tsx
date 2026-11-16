@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { getQuality } from '@/engine/config/quality'
 import { debugStats } from './debugStats'
@@ -11,16 +11,17 @@ export function PerfMonitor() {
   const gl = useThree((s) => s.gl)
   const enabled = new URLSearchParams(window.location.search).has('debug')
 
-  const [counters] = useState(() => ({ frames: 0, last: performance.now(), worst: 0 }))
+  const countersRef = useRef({ frames: 0, last: 0, worst: 0 })
 
   useFrame((_, delta) => {
     if (!enabled) return
-    counters.frames++
-    counters.worst = Math.max(counters.worst, delta * 1000)
+    countersRef.current.frames++
+    countersRef.current.worst = Math.max(countersRef.current.worst, delta * 1000)
   })
 
   useEffect(() => {
     if (!enabled) return
+    countersRef.current.last = performance.now()
     const el = document.createElement('pre')
     el.setAttribute('data-solaris-debug', '')
     Object.assign(el.style, {
@@ -41,33 +42,34 @@ export function PerfMonitor() {
 
     const q = getQuality()
     const id = window.setInterval(() => {
+      const c = countersRef.current
       const now = performance.now()
-      const secs = (now - counters.last) / 1000
-      const fps = counters.frames / secs
+      const secs = (now - c.last) / 1000
+      const fps = c.frames / secs
       const { render, memory } = gl.info
+      const texSummary = Object.entries(debugStats.textureRes)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(' ')
       el.textContent = [
-        `FPS        ${fps.toFixed(1)}  (peor frame ${counters.worst.toFixed(1)} ms)`,
+        `FPS        ${fps.toFixed(1)}  (peor frame ${c.worst.toFixed(1)} ms)`,
         `Draw calls ${render.calls}`,
         `Triángulos ${render.triangles.toLocaleString('es-ES')}`,
         `Geometrías ${memory.geometries}`,
         `Texturas   ${memory.textures}`,
         `DPR        ${gl.getPixelRatio().toFixed(2)}  (${gl.domElement.width}x${gl.domElement.height})`,
         `Calidad    ${q.tier}  (objetivo ${q.textureRes})`,
-        `Earth tex  ${debugStats.textureRes.earth ?? '—'}  ${JSON.stringify(debugStats.textureLoadMs)}`,
-        `Sky tex    ${debugStats.textureRes.sky ?? '—'}`,
+        `Niveles    ${texSummary}`,
       ].join('\n')
-      counters.frames = 0
-      counters.worst = 0
-      counters.last = now
+      c.frames = 0
+      c.worst = 0
+      c.last = now
     }, 500)
 
     return () => {
       window.clearInterval(id)
       el.remove()
     }
-    // `counters` es mutable por diseño y estable durante el montaje.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, gl, counters])
+  }, [enabled, gl])
 
   return null
 }

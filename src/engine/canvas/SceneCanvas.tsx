@@ -1,11 +1,13 @@
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { HERO_CAMERA_Z, HERO_FOV } from '@/engine/camera/heroLayout'
+import { SolarSystemCamera } from '@/engine/camera/SolarSystemCamera'
 import { getQuality } from '@/engine/config/quality'
 import { PerfMonitor } from '@/engine/debug/PerfMonitor'
 import { Skybox } from '@/engine/environment/Skybox'
 import { SunLight } from '@/engine/lighting/SunLight'
-import { Earth } from '@/engine/planets/Earth'
+import { Starfield } from '@/engine/particles/Starfield'
+import { SolarSystem } from '@/engine/planets/SolarSystem'
 import { SceneReadyNotifier } from './SceneReadyNotifier'
 
 /**
@@ -18,16 +20,18 @@ export function SceneCanvas() {
   return (
     <div className="fixed inset-0 z-0" aria-hidden="true">
       <Canvas
-        camera={{ position: [0, 0, HERO_CAMERA_Z], fov: HERO_FOV, near: 0.1, far: 2000 }}
+        camera={{ position: [0, 0, HERO_CAMERA_Z], fov: HERO_FOV, near: 0.1, far: 3500 }}
         dpr={[1, quality.maxDpr]}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#020609']} />
+        <SolarSystemCamera />
         <PerfMonitor />
         <Suspense fallback={null}>
           <SunLight />
           <Skybox />
-          <Earth />
+          <Starfield />
+          <SolarSystem />
           <SceneReadyNotifier />
         </Suspense>
       </Canvas>

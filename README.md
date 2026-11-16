@@ -2,8 +2,9 @@
 
 Experiencia web 3D ficticia de turismo espacial (React + Three.js + WebGL).
 Plan completo: [`SOLARIS_ENGINEERING_PLAN.md`](./SOLARIS_ENGINEERING_PLAN.md).
+Registro de texturas y licencias: [`docs/ASSETS.md`](./docs/ASSETS.md).
 
-**Estado:** FASE 1 — sistema visual y UI HUD (sobre escena placeholder).
+**Estado:** FASE 2 (2A + 2B) — motor planetario realista completo (Tierra, Sol, Mercurio, Venus, Marte, Júpiter, Saturno con anillos, órbitas visuales y campo estelar).
 
 ## Requisitos
 
@@ -12,47 +13,33 @@ Plan completo: [`SOLARIS_ENGINEERING_PLAN.md`](./SOLARIS_ENGINEERING_PLAN.md).
 
 ## Comandos
 
-| Comando             | Descripción                                   |
-| ------------------- | --------------------------------------------- |
-| `npm install`       | Instala dependencias                          |
-| `npm run dev`       | Servidor de desarrollo (Vite)                 |
-| `npm run build`     | Typecheck estricto + build de producción      |
-| `npm run preview`   | Sirve el build de `dist/`                     |
-| `npm run lint`      | ESLint                                        |
-| `npm run typecheck` | Solo comprobación de tipos                    |
+| Comando             | Descripción                                                      |
+| ------------------- | ---------------------------------------------------------------- |
+| `npm install`       | Instala dependencias                                             |
+| `npm run textures`  | Genera niveles `2k / 4k / 8k` WebP desde `assets-src/`           |
+| `npm run dev`       | Servidor de desarrollo (Vite)                                    |
+| `npm run build`     | Typecheck estricto + build de producción                         |
+| `npm run preview`   | Sirve el build de `dist/`                                        |
+| `npm run lint`      | ESLint                                                           |
+| `npm run typecheck` | Solo comprobación de tipos                                       |
 
-## Stack (versiones instaladas)
+## Parámetros de URL útiles
 
-React 19 · TypeScript (strict) · Vite · Three.js · React Three Fiber 9 ·
-@react-three/drei · GSAP · Zustand · Tailwind CSS 4 · Lucide React.
-`@react-three/postprocessing` se añadirá en la FASE 2 cuando se necesite.
+- `?quality=low|medium|high|ultra` — fuerza el nivel de calidad y resolución de texturas (`2k`, `4k`, `8k`).
+- `?debug` — muestra en tiempo real FPS, peor frame, draw calls, triángulos, geometrías, texturas en GPU y resolución activa por cuerpo.
 
 ## Arquitectura
 
-- **Capa 3D** (`src/engine/`): `SceneCanvas` es un canvas R3F independiente
-  (`fixed`, `z-0`). No importa componentes HTML.
+- **Capa 3D** (`src/engine/`): `SceneCanvas` es un canvas R3F independiente (`fixed`, `z-0`). No importa componentes HTML.
+  - `engine/planets/`: componentes independientes (`Earth`, `Sun`, `Mercury`, `Venus`, `Mars`, `Jupiter`, `Saturn`, `SolarSystem`).
+  - `engine/materials/`: shaders GLSL específicos por tipo de cuerpo (`earthSurface`, `cloudsAndAtmosphere`, `rockyPlanet`, `venusMaterial`, `gasGiant`, `sunMaterial`), con muestreo equirectangular sin costuras (`seamlessGradients` + `textureGrad`).
+  - `engine/orbits/OrbitLines.tsx`: órbitas visuales en el plano de la eclíptica.
+  - `engine/particles/Starfield.tsx` y `engine/environment/Skybox.tsx`: campo estelar puntual 3D + Vía Láctea.
+  - `engine/textures/`: carga progresiva (`2k` inmediato por Suspense → `4k/8k` bajo demanda para el planeta activo, con liberación automática de VRAM).
 - **Capa UI** (`src/components/`): HTML/CSS superpuesto (`z-10`).
-- **Estado** (`src/stores/navigation.store.ts`): único puente entre ambas capas.
-  Estados: `loading → earth_hero → solar_system → transitioning →
-  planet_detail | station_detail`. Las selecciones se bloquean mientras
-  `isTransitioning` es `true`.
-- **Datos** (`src/data/`): destinos tipados (datos científicos separados de
-  posiciones visuales) y paquetes (FASE 5).
-- Alias `@/` → `src/`.
+- **Estado** (`src/stores/navigation.store.ts` y `src/stores/ui.store.ts`).
 
-## Placeholders temporales (FASE 0)
+## Placeholders pendientes de fases posteriores
 
-- `engine/planets/PlaceholderPlanet.tsx` — esfera plana → Tierra real en FASE 2A.
-- `engine/particles/PlaceholderStars.tsx` — estrellas de drei.
-- `hooks/usePlaceholderTransition.ts` — temporizador → timelines GSAP en FASE 3.
-- `data/tiers.ts` — categorías genéricas con datos ficticios → catálogo por destino en FASE 5.
-
-## UI (FASE 1)
-
-- `components/ui/` — `Button`, `Badge`, `DataReadout`, `Fade`, `Modal` (reutilizables).
-- `components/layout/` — `Header`, `HeroOverlay`, `Logo`.
-- `components/hud/DestinationHud.tsx` — datos del destino (izquierda).
-- `components/packages/` — `CommercialPanel`, `TierCard`, `BookingModal` (reserva demostrativa).
-- `components/destinations/DestinationBar.tsx` — barra inferior de destinos.
-- `stores/ui.store.ts` — estado solo de interfaz (categoría, modal, bottom sheet).
-
+- `hooks/usePlaceholderTransition.ts` — temporizador de transición → se reemplaza por timelines cinematográficos GSAP en la **FASE 3**.
+- `data/tiers.ts` — categorías genéricas con datos ficticios → catálogo específico por destino en la **FASE 5**.

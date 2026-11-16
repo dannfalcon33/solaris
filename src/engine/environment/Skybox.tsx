@@ -1,9 +1,15 @@
 import { useLayoutEffect, useMemo } from 'react'
-import { BackSide, MeshBasicMaterial } from 'three'
+import { BackSide, MeshBasicMaterial, type Texture } from 'three'
 import { getQuality } from '@/engine/config/quality'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
 
 const SKY_SPECS = { milkyway: { srgb: true } } as const
+
+function applySkyboxTexture(mat: MeshBasicMaterial, tex: Texture): void {
+  mat.map = tex
+  mat.color.setScalar(0.42)
+  mat.needsUpdate = true
+}
 
 /**
  * Fondo estelar: panorámica de la Vía Láctea (equirectangular) en una esfera
@@ -18,16 +24,16 @@ export function Skybox() {
     () => new MeshBasicMaterial({ side: BackSide, depthWrite: false, toneMapped: false, fog: false }),
     [],
   )
-  // Se asigna mapa y brillo aquí (no en render) para poder intercambiar niveles.
+
   useLayoutEffect(() => {
-    material.map = textures.milkyway
-    material.color.setScalar(0.42)
-    material.needsUpdate = true
+    applySkyboxTexture(material, textures.milkyway)
   }, [material, textures])
+
+  useLayoutEffect(() => () => material.dispose(), [material])
 
   return (
     <mesh material={material} renderOrder={-10} rotation={[0.45, 2.2, 0.25]} frustumCulled={false} name="skybox">
-      <sphereGeometry args={[900, 64, 32]} />
+      <sphereGeometry args={[1400, 64, 32]} />
     </mesh>
   )
 }

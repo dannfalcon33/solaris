@@ -1,8 +1,8 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import type { Group, Mesh } from 'three'
-import { heroLayout } from '@/engine/camera/heroLayout'
 import { getQuality } from '@/engine/config/quality'
+import { BODIES, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
 import {
   ATMOSPHERE_RADIUS,
   EARTH_RADIUS,
@@ -12,6 +12,7 @@ import {
 } from '@/engine/materials/cloudsAndAtmosphere'
 import { createEarthSurfaceMaterial, setEarthSurfaceTextures } from '@/engine/materials/earthSurface'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
+import { useIsBodyFocused } from '@/hooks/useIsBodyFocused'
 
 const EARTH_SPECS = {
   day: { srgb: true },
@@ -21,12 +22,12 @@ const EARTH_SPECS = {
   specular: { srgb: false },
 } as const
 
-/** Inclinación axial real (23,44°). */
-const AXIAL_TILT = (23.44 * Math.PI) / 180
-/** Rotación de la superficie (rad/s). Muy lenta: la escena es contemplativa. */
-const SURFACE_SPIN = 0.010
+const body = BODIES.earth
+const pos = getBodyPosition('earth')
+const sunDir = getSunDirectionForBody('earth')
+
 /** Las nubes giran ligeramente más rápido que la superficie. */
-const CLOUD_SPIN = 0.0128
+const CLOUD_SPIN = body.rotationSpeed * 1.28
 /** Longitud (°E) que mira a cámara al inicio: Atlántico, entre América y África/Europa. */
 const START_LONGITUDE_DEG = -30
 const CLOUD_RADIUS = EARTH_RADIUS + 0.0065
@@ -38,14 +39,22 @@ const CLOUD_RADIUS = EARTH_RADIUS + 0.0065
  */
 export function Earth() {
   const quality = getQuality()
-  const { textures } = useProgressiveTextureSet('earth', EARTH_SPECS, quality.textureRes, quality.anisotropy)
+  const focused = useIsBodyFocused('earth')
+  const { textures } = useProgressiveTextureSet(
+    'earth',
+    EARTH_SPECS,
+    quality.textureRes,
+    quality.anisotropy,
+    focused,
+  )
 
-  const aspect = useThree((s) => s.size.width / s.size.height)
-  const layout = heroLayout(aspect)
-
-  const surface = useMemo(() => createEarthSurfaceMaterial(quality.cloudShadows), [quality.cloudShadows])
-  const clouds = useMemo(() => createCloudMaterial(), [])
-  const atmosphere = useMemo(() => createAtmosphereMaterial(), [])
+  const surface = useMemo(() => {
+    const mat = createEarthSurfaceMaterial(quality.cloudShadows)
+    mat.uniforms.uSunDir!.value = sunDir
+    return mat
+  }, [quality.cloudShadows])
+  const clouds = useMemo(() => createCloudMaterial(sunDir), [])
+  const atmosphere = useMemo(() => createAtmosphereMaterial({ sunDir }), [])
 
   useLayoutEffect(() => {
     setEarthSurfaceTextures(surface, textures)
@@ -66,9 +75,8 @@ export function Earth() {
   const rigRef = useRef<Group>(null)
 
   useFrame((_, delta) => {
-    // `delta` acotado: evita saltos tras pestañas en segundo plano.
     const dt = Math.min(delta, 0.1)
-    if (surfaceRef.current) surfaceRef.current.rotation.y += dt * SURFACE_SPIN
+    if (surfaceRef.current) surfaceRef.current.rotation.y += dt * body.rotationSpeed
     if (cloudsRef.current) cloudsRef.current.rotation.y += dt * CLOUD_SPIN
   })
 
@@ -76,8 +84,8 @@ export function Earth() {
   const seg = quality.sphereSegments
 
   return (
-    <group ref={rigRef} position={[layout.x, layout.y, 0]} scale={layout.radius}>
-      <group rotation={[0, 0, AXIAL_TILT]}>
+    <group ref={rigRef} position={[pos.x, pos.y, pos.z]} scale={body.visualRadius} name="planet-earth">
+      <group rotation={[0, 0, body.axialTiltRad]}>
         <mesh ref={surfaceRef} material={surface} rotation={[0, startRotation, 0]} name="earth-surface">
           <sphereGeometry args={[EARTH_RADIUS, seg, seg / 2]} />
         </mesh>
@@ -91,4 +99,3 @@ export function Earth() {
     </group>
   )
 }
-
