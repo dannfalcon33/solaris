@@ -1,11 +1,11 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Mesh } from 'three'
-import { getQuality } from '@/engine/config/quality'
 import { BODIES, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
 import { createRockyPlanetMaterial, setRockyPlanetTexture } from '@/engine/materials/rockyPlanet'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
-import { useIsBodyFocused } from '@/hooks/useIsBodyFocused'
+import { useBodyLod } from '@/hooks/useIsBodyFocused'
+import { getMotionScale } from '@/hooks/usePrefersReducedMotion'
 
 const MERCURY_SPECS = { albedo: { srgb: true } } as const
 const body = BODIES.mercury
@@ -14,11 +14,10 @@ const sunDir = getSunDirectionForBody('mercury')
 
 /**
  * Mercurio: superficie craterizada sin atmósfera con reflectancia de regolito
- * Lommel-Seeliger e iluminación solar intensa.
+ * Lommel-Seeliger, LOD por distancia e iluminación solar intensa.
  */
 export function Mercury() {
-  const quality = getQuality()
-  const focused = useIsBodyFocused('mercury')
+  const { quality, focused, segments: seg } = useBodyLod('mercury')
   const { textures } = useProgressiveTextureSet(
     'mercury',
     MERCURY_SPECS,
@@ -49,11 +48,9 @@ export function Mercury() {
   const meshRef = useRef<Mesh>(null)
 
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     if (meshRef.current) meshRef.current.rotation.y += dt * body.rotationSpeed
   })
-
-  const seg = quality.sphereSegments
 
   return (
     <group position={[pos.x, pos.y, pos.z]} scale={body.visualRadius} name="planet-mercury">

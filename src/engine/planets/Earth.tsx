@@ -1,7 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group, Mesh } from 'three'
-import { getQuality } from '@/engine/config/quality'
 import { BODIES, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
 import {
   ATMOSPHERE_RADIUS,
@@ -12,7 +11,8 @@ import {
 } from '@/engine/materials/cloudsAndAtmosphere'
 import { createEarthSurfaceMaterial, setEarthSurfaceTextures } from '@/engine/materials/earthSurface'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
-import { useIsBodyFocused } from '@/hooks/useIsBodyFocused'
+import { useBodyLod } from '@/hooks/useIsBodyFocused'
+import { getMotionScale } from '@/hooks/usePrefersReducedMotion'
 
 const EARTH_SPECS = {
   day: { srgb: true },
@@ -33,13 +33,10 @@ const START_LONGITUDE_DEG = -30
 const CLOUD_RADIUS = EARTH_RADIUS + 0.0065
 
 /**
- * Tierra fotorrealista: superficie (albedo, relieve, océanos, luces nocturnas,
- * sombras de nubes), capa de nubes independiente y atmósfera.
- * Las texturas cargan progresivamente (2k → resolución objetivo de calidad).
+ * Tierra fotorrealista con LOD por distancia y carga progresiva de texturas.
  */
 export function Earth() {
-  const quality = getQuality()
-  const focused = useIsBodyFocused('earth')
+  const { quality, focused, segments: seg, atmoSegments } = useBodyLod('earth')
   const { textures } = useProgressiveTextureSet(
     'earth',
     EARTH_SPECS,
@@ -75,13 +72,12 @@ export function Earth() {
   const rigRef = useRef<Group>(null)
 
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     if (surfaceRef.current) surfaceRef.current.rotation.y += dt * body.rotationSpeed
     if (cloudsRef.current) cloudsRef.current.rotation.y += dt * CLOUD_SPIN
   })
 
   const startRotation = -Math.PI / 2 - (START_LONGITUDE_DEG * Math.PI) / 180
-  const seg = quality.sphereSegments
 
   return (
     <group ref={rigRef} position={[pos.x, pos.y, pos.z]} scale={body.visualRadius} name="planet-earth">
@@ -94,7 +90,7 @@ export function Earth() {
         </mesh>
       </group>
       <mesh material={atmosphere} name="earth-atmosphere" renderOrder={2}>
-        <sphereGeometry args={[ATMOSPHERE_RADIUS, 96, 48]} />
+        <sphereGeometry args={[ATMOSPHERE_RADIUS, atmoSegments, atmoSegments / 2]} />
       </mesh>
     </group>
   )

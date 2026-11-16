@@ -1,7 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Euler, RingGeometry, Vector3, type Mesh } from 'three'
-import { getQuality } from '@/engine/config/quality'
 import { BODIES, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
 import { createAtmosphereMaterial } from '@/engine/materials/cloudsAndAtmosphere'
 import {
@@ -12,7 +11,8 @@ import {
   setGasGiantTextures,
 } from '@/engine/materials/gasGiant'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
-import { useIsBodyFocused } from '@/hooks/useIsBodyFocused'
+import { useBodyLod } from '@/hooks/useIsBodyFocused'
+import { getMotionScale } from '@/hooks/usePrefersReducedMotion'
 
 const SATURN_SPECS = {
   albedo: { srgb: true },
@@ -23,14 +23,9 @@ const body = BODIES.saturn
 const pos = getBodyPosition('saturn')
 const sunDir = getSunDirectionForBody('saturn')
 
-// Inclinación del sistema ecuatorial y de anillos de Saturno en espacio mundo.
 const tiltEuler = new Euler(0.22, 0, body.axialTiltRad)
 const ringNormal = new Vector3(0, 1, 0).applyEuler(tiltEuler).normalize()
 
-/**
- * Crea un RingGeometry con coordenadas UV radiales:
- * `u = (r - inner) / (outer - inner)` de 0 (borde interior) a 1 (borde exterior).
- */
 function createRadialRingGeometry(inner: number, outer: number, thetaSegments: number): RingGeometry {
   const geo = new RingGeometry(inner, outer, thetaSegments, 1)
   const posAttr = geo.attributes.position!
@@ -47,13 +42,11 @@ function createRadialRingGeometry(inner: number, outer: number, thetaSegments: n
 }
 
 /**
- * Saturno: bandas atmosféricas doradas, sombra proyectada de los anillos sobre
- * el globo, y sistema de anillos independiente con textura alpha, división de
- * Cassini y sombra del planeta sobre los anillos.
+ * Saturno: bandas atmosféricas doradas, sombra de anillos, geometría
+ * independiente de anillos y LOD por distancia.
  */
 export function Saturn() {
-  const quality = getQuality()
-  const focused = useIsBodyFocused('saturn')
+  const { quality, focused, segments: seg, atmoSegments } = useBodyLod('saturn')
   const { textures } = useProgressiveTextureSet(
     'saturn',
     SATURN_SPECS,
@@ -79,9 +72,10 @@ export function Saturn() {
     [],
   )
 
+  const ringSegments = focused ? Math.max(128, seg) : 64
   const ringGeometry = useMemo(
-    () => createRadialRingGeometry(SATURN_RING_INNER, SATURN_RING_OUTER, Math.max(128, quality.sphereSegments)),
-    [quality.sphereSegments],
+    () => createRadialRingGeometry(SATURN_RING_INNER, SATURN_RING_OUTER, ringSegments),
+    [ringSegments],
   )
 
   const atmosphere = useMemo(
@@ -115,11 +109,9 @@ export function Saturn() {
   const meshRef = useRef<Mesh>(null)
 
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     if (meshRef.current) meshRef.current.rotation.y += dt * body.rotationSpeed
   })
-
-  const seg = quality.sphereSegments
 
   return (
     <group position={[pos.x, pos.y, pos.z]} scale={body.visualRadius} name="planet-saturn">
@@ -136,7 +128,7 @@ export function Saturn() {
         />
       </group>
       <mesh material={atmosphere} renderOrder={2} name="saturn-atmosphere">
-        <sphereGeometry args={[1.05, 96, 48]} />
+        <sphereGeometry args={[1.05, atmoSegments, atmoSegments / 2]} />
       </mesh>
     </group>
   )

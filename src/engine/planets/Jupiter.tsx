@@ -1,12 +1,12 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Mesh } from 'three'
-import { getQuality } from '@/engine/config/quality'
 import { BODIES, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
 import { createAtmosphereMaterial } from '@/engine/materials/cloudsAndAtmosphere'
 import { createGasGiantMaterial, setGasGiantTextures } from '@/engine/materials/gasGiant'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
-import { useIsBodyFocused } from '@/hooks/useIsBodyFocused'
+import { useBodyLod } from '@/hooks/useIsBodyFocused'
+import { getMotionScale } from '@/hooks/usePrefersReducedMotion'
 
 const JUPITER_SPECS = { albedo: { srgb: true } } as const
 const body = BODIES.jupiter
@@ -14,12 +14,11 @@ const pos = getBodyPosition('jupiter')
 const sunDir = getSunDirectionForBody('jupiter')
 
 /**
- * Júpiter: bandas atmosféricas ecuatoriales, Gran Mancha Roja, micro-relieve
- * convectivo y oscurecimiento de limbo de gigante gaseoso.
+ * Júpiter: bandas atmosféricas ecuatoriales, Gran Mancha Roja, LOD por
+ * distancia y oscurecimiento de limbo de gigante gaseoso.
  */
 export function Jupiter() {
-  const quality = getQuality()
-  const focused = useIsBodyFocused('jupiter')
+  const { quality, focused, segments: seg, atmoSegments } = useBodyLod('jupiter')
   const { textures } = useProgressiveTextureSet(
     'jupiter',
     JUPITER_SPECS,
@@ -67,11 +66,9 @@ export function Jupiter() {
   const meshRef = useRef<Mesh>(null)
 
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     if (meshRef.current) meshRef.current.rotation.y += dt * body.rotationSpeed
   })
-
-  const seg = quality.sphereSegments
 
   return (
     <group position={[pos.x, pos.y, pos.z]} scale={body.visualRadius} name="planet-jupiter">
@@ -80,8 +77,8 @@ export function Jupiter() {
           <sphereGeometry args={[1, seg, seg / 2]} />
         </mesh>
       </group>
-      <mesh material={atmosphere} renderOrder={2} name="jupiter-atmosphere">
-        <sphereGeometry args={[1.05, 96, 48]} />
+      <mesh material={atmosphere} renderOrder={2} name="mars-atmosphere">
+        <sphereGeometry args={[1.05, atmoSegments, atmoSegments / 2]} />
       </mesh>
     </group>
   )

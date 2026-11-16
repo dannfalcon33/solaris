@@ -1,12 +1,12 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Mesh } from 'three'
-import { getQuality } from '@/engine/config/quality'
 import { BODIES, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
 import { ATMOSPHERE_RADIUS, createAtmosphereMaterial } from '@/engine/materials/cloudsAndAtmosphere'
 import { advanceVenusClouds, createVenusMaterial, setVenusTextures } from '@/engine/materials/venusMaterial'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
-import { useIsBodyFocused } from '@/hooks/useIsBodyFocused'
+import { useBodyLod } from '@/hooks/useIsBodyFocused'
+import { getMotionScale } from '@/hooks/usePrefersReducedMotion'
 
 const VENUS_SPECS = {
   surface: { srgb: true },
@@ -19,11 +19,10 @@ const sunDir = getSunDirectionForBody('venus')
 
 /**
  * Venus: atmósfera densa de ácido sulfúrico en super-rotación sobre la
- * superficie volcánica, con halo atmosférico cálido dorado-ámbar.
+ * superficie volcánica, con LOD por distancia y halo cálido dorado-ámbar.
  */
 export function Venus() {
-  const quality = getQuality()
-  const focused = useIsBodyFocused('venus')
+  const { quality, focused, segments: seg, atmoSegments } = useBodyLod('venus')
   const { textures } = useProgressiveTextureSet(
     'venus',
     VENUS_SPECS,
@@ -62,12 +61,10 @@ export function Venus() {
   const meshRef = useRef<Mesh>(null)
 
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     if (meshRef.current) meshRef.current.rotation.y += dt * body.rotationSpeed
     advanceVenusClouds(surface, dt)
   })
-
-  const seg = quality.sphereSegments
 
   return (
     <group position={[pos.x, pos.y, pos.z]} scale={body.visualRadius} name="planet-venus">
@@ -77,7 +74,7 @@ export function Venus() {
         </mesh>
       </group>
       <mesh material={atmosphere} renderOrder={2} name="venus-atmosphere">
-        <sphereGeometry args={[ATMOSPHERE_RADIUS + 0.01, 96, 48]} />
+        <sphereGeometry args={[ATMOSPHERE_RADIUS + 0.01, atmoSegments, atmoSegments / 2]} />
       </mesh>
     </group>
   )

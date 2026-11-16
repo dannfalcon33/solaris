@@ -1,12 +1,12 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Mesh } from 'three'
-import { getQuality } from '@/engine/config/quality'
 import { BODIES, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
 import { createAtmosphereMaterial } from '@/engine/materials/cloudsAndAtmosphere'
 import { createRockyPlanetMaterial, setRockyPlanetTexture } from '@/engine/materials/rockyPlanet'
 import { useProgressiveTextureSet } from '@/engine/textures/useProgressiveTextureSet'
-import { useIsBodyFocused } from '@/hooks/useIsBodyFocused'
+import { useBodyLod } from '@/hooks/useIsBodyFocused'
+import { getMotionScale } from '@/hooks/usePrefersReducedMotion'
 
 const MARS_SPECS = { albedo: { srgb: true } } as const
 const body = BODIES.mars
@@ -14,12 +14,11 @@ const pos = getBodyPosition('mars')
 const sunDir = getSunDirectionForBody('mars')
 
 /**
- * Marte: albedo rojizo con relieve de cañones (Valles Marineris) y volcanes,
- * realce especular en casquetes polares y atmósfera tenue de polvo en suspensión.
+ * Marte: albedo rojizo con relieve de cañones (Valles Marineris), casquetes
+ * polares, LOD por distancia y atmósfera tenue de polvo en suspensión.
  */
 export function Mars() {
-  const quality = getQuality()
-  const focused = useIsBodyFocused('mars')
+  const { quality, focused, segments: seg, atmoSegments } = useBodyLod('mars')
   const { textures } = useProgressiveTextureSet(
     'mars',
     MARS_SPECS,
@@ -72,11 +71,9 @@ export function Mars() {
   const meshRef = useRef<Mesh>(null)
 
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     if (meshRef.current) meshRef.current.rotation.y += dt * body.rotationSpeed
   })
-
-  const seg = quality.sphereSegments
 
   return (
     <group position={[pos.x, pos.y, pos.z]} scale={body.visualRadius} name="planet-mars">
@@ -86,7 +83,7 @@ export function Mars() {
         </mesh>
       </group>
       <mesh material={atmosphere} renderOrder={2} name="mars-atmosphere">
-        <sphereGeometry args={[1.055, 96, 48]} />
+        <sphereGeometry args={[1.055, atmoSegments, atmoSegments / 2]} />
       </mesh>
     </group>
   )

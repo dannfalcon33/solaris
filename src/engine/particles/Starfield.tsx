@@ -6,7 +6,7 @@ import {
   Color,
   ShaderMaterial,
 } from 'three'
-import { getQuality } from '@/engine/config/quality'
+import { useQuality } from '@/engine/config/quality'
 
 const vertexShader = /* glsl */ `
   attribute float aSize;
@@ -40,7 +40,6 @@ const SPECTRAL_COLORS = [
   new Color('#ffd7a8'), // tipo K cálido
 ]
 
-/** Generador pseudoaleatorio determinista (Mulberry32) para evitar impurezas en useMemo. */
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0
   return () => {
@@ -52,13 +51,12 @@ function mulberry32(seed: number): () => number {
 }
 
 /**
- * Campo estelar puntual 3D con distribución esférica y colores espectrales
- * realistas. Complementa la panorámica de la Vía Láctea (`Skybox`) con
- * paralaje espacial y estrellas nítidas.
+ * Campo estelar puntual 3D cuya cantidad de partículas se adapta
+ * dinámicamente al nivel de calidad (`quality.starCount`, reducido en móviles).
  */
 export function Starfield() {
-  const quality = getQuality()
-  const count = quality.tier === 'low' ? 1800 : quality.tier === 'medium' ? 2600 : 3800
+  const quality = useQuality()
+  const count = quality.starCount
 
   const { geometry, material } = useMemo(() => {
     const rand = mulberry32(203104)

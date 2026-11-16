@@ -1,23 +1,31 @@
-import { use, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import {
   AdditiveBlending,
   Color,
   CylinderGeometry,
+  DodecahedronGeometry,
   Group,
+  InstancedMesh,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
+  Quaternion,
   RingGeometry,
   SphereGeometry,
   Vector3,
 } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { computeCameraPose } from '@/engine/camera/heroLayout'
+import { useQuality } from '@/engine/config/quality'
 import { BODIES, DESTINATION_TO_BODY, getBodyPosition, getSunDirectionForBody } from '@/engine/config/solarSystemLayout'
+import { debugStats } from '@/engine/debug/debugStats'
 import { createAtmosphereMaterial } from '@/engine/materials/cloudsAndAtmosphere'
 import { createEuropaMaterial, createTitanMaterial } from '@/engine/materials/moonMaterials'
+import { getMotionScale } from '@/hooks/usePrefersReducedMotion'
+import { useNavigationStore } from '@/stores/navigation.store'
 import type { DestinationId } from '@/types'
 
 const UP = new Vector3(0, 1, 0)
@@ -27,21 +35,13 @@ const REFERENCE_ASPECT = 16 / 9
 interface StationPlacementSpec {
   destinationId: DestinationId
   modelFile: string
-  /** Fracción de la distancia cámara -> planeta a la que se ubica la estación. */
   dFactor: number
-  /** Desplazamiento horizontal en el encuadre (fracción de camDist). */
   xFactor: number
-  /** Desplazamiento vertical en el encuadre (fracción de camDist). */
   yFactor: number
-  /** Escala del modelo en fracción de camDist. */
   scaleFactor: number
-  /** Inclinación artística de la estación (Euler XYZ). */
   tilt: [number, number, number]
-  /** Si `true`, orienta el eje +Z local de la estación hacia el Sol (Mercurio). */
   faceSun?: boolean
-  /** Velocidad de giro del anillo centrífugo `rotor_ring` (rad/s). */
   rotorSpeed: number
-  /** Color de luz de rebote planetario sobre el casco metálico. */
   bounceColor: string
 }
 
@@ -123,7 +123,6 @@ export interface ComputedStationPlacement {
   planetDir: Vector3
 }
 
-/** Calcula la base ortonormal del encuadre de cámara de un destino. */
 function getDestinationCameraBasis(destinationId: DestinationId) {
   const bodyId = DESTINATION_TO_BODY[destinationId]
   const planetCenter = getBodyPosition(bodyId)
@@ -159,19 +158,21 @@ function computeStationPlacements(): ComputedStationPlacement[] {
   })
 }
 
-let modelsCachePromise: Promise<Record<string, Group>> | null = null
+const modelPromiseCache = new Map<string, Promise<Group>>()
+const gltfLoader = new GLTFLoader()
 
-function loadAllStationModels(): Promise<Record<string, Group>> {
-  if (!modelsCachePromise) {
-    const loader = new GLTFLoader()
-    modelsCachePromise = Promise.all(
-      STATION_SPECS.map(async (s) => {
-        const gltf = await loader.loadAsync(`${BASE}models/${s.modelFile}`)
-        return [s.modelFile, gltf.scene] as const
-      }),
-    ).then((pairs) => Object.fromEntries(pairs))
+/** Carga diferida e individual de modelos .glb con caché en memoria. */
+function loadStationModel(modelFile: string): Promise<Group> {
+  let promise = modelPromiseCache.get(modelFile)
+  if (!promise) {
+    const t0 = performance.now()
+    promise = gltfLoader.loadAsync(`${BASE}models/${modelFile}`).then((gltf) => {
+      debugStats.textureLoadMs[`glb:${modelFile}`] = Math.round(performance.now() - t0)
+      return gltf.scene
+    })
+    modelPromiseCache.set(modelFile, promise)
   }
-  return modelsCachePromise
+  return promise
 }
 
 function orientObjectToSun(obj: Object3D, sunDir: Vector3, tilt: [number, number, number]): void {
@@ -257,27 +258,25 @@ function CompanionMoons() {
   const titanRef = useRef<Mesh>(null)
 
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     if (europaRef.current) europaRef.current.rotation.y += dt * 0.014
     if (titanRef.current) titanRef.current.rotation.y += dt * 0.011
   })
 
   return (
     <group name="companion-moons">
-      {/* Europa en órbita joviana */}
       <group position={[europaPos.x, europaPos.y, europaPos.z]} scale={europaRadius} name="moon-europa">
         <mesh ref={europaRef} material={europaMat}>
-          <sphereGeometry args={[1, 64, 32]} />
+          <sphereGeometry args={[1, 48, 24]} />
         </mesh>
       </group>
 
-      {/* Titán en órbita saturniana exterior con bruma estratosférica azulada */}
       <group position={[titanPos.x, titanPos.y, titanPos.z]} scale={titanRadius} name="moon-titan">
         <mesh ref={titanRef} material={titanMat}>
-          <sphereGeometry args={[1, 64, 32]} />
+          <sphereGeometry args={[1, 48, 24]} />
         </mesh>
         <mesh material={titanHaze} renderOrder={2}>
-          <sphereGeometry args={[1.09, 48, 24]} />
+          <sphereGeometry args={[1.09, 36, 18]} />
         </mesh>
       </group>
     </group>
@@ -285,20 +284,16 @@ function CompanionMoons() {
 }
 
 /* ================================================================== */
-/* Colonias e instalaciones de superficie (Marte y Mercurio)          */
+/* Colonias de superficie con InstancedMesh (Marte y Mercurio)        */
 /* ================================================================== */
 interface ColonyClusterSpec {
   bodyId: 'mars' | 'mercury'
-  accentColor: string
-  glowColor: string
   offsets: ReadonlyArray<{ dTheta: number; dPhi: number; scale: number }>
 }
 
 const COLONY_SPECS: readonly ColonyClusterSpec[] = [
   {
     bodyId: 'mars',
-    accentColor: '#ff9d5c',
-    glowColor: '#00e5c3',
     offsets: [
       { dTheta: 0.08, dPhi: 0.06, scale: 1.0 },
       { dTheta: 0.13, dPhi: 0.03, scale: 0.72 },
@@ -308,8 +303,6 @@ const COLONY_SPECS: readonly ColonyClusterSpec[] = [
   },
   {
     bodyId: 'mercury',
-    accentColor: '#ffd27d',
-    glowColor: '#35ddf2',
     offsets: [
       { dTheta: 0.12, dPhi: -0.05, scale: 0.9 },
       { dTheta: 0.17, dPhi: -0.01, scale: 0.65 },
@@ -318,128 +311,296 @@ const COLONY_SPECS: readonly ColonyClusterSpec[] = [
   },
 ]
 
-function SurfaceColonies() {
-  const clusters = useMemo(() => {
-    const domeGeo = new SphereGeometry(0.014, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2)
-    const ringGeo = new RingGeometry(0.017, 0.023, 24)
-    const towerGeo = new CylinderGeometry(0.002, 0.003, 0.024, 8)
+function applyInstancedColonyMatrices(
+  domesMesh: InstancedMesh,
+  towersMesh: InstancedMesh,
+  ringsMesh: InstancedMesh,
+  domeMatrices: Matrix4[],
+  towerMatrices: Matrix4[],
+  ringMatrices: Matrix4[],
+): void {
+  for (let i = 0; i < domeMatrices.length; i++) {
+    domesMesh.setMatrixAt(i, domeMatrices[i]!)
+    towersMesh.setMatrixAt(i, towerMatrices[i]!)
+    ringsMesh.setMatrixAt(i, ringMatrices[i]!)
+  }
+  domesMesh.instanceMatrix.needsUpdate = true
+  towersMesh.instanceMatrix.needsUpdate = true
+  ringsMesh.instanceMatrix.needsUpdate = true
+}
 
-    const domeMat = new MeshStandardMaterial({
-      color: new Color('#d8e6ec'),
-      metalness: 0.85,
-      roughness: 0.2,
-      emissive: new Color('#ffba75'),
-      emissiveIntensity: 0.55,
-    })
+function InstancedSurfaceColonies() {
+  const { domeGeo, ringGeo, towerGeo, domeMat, ringMat, domeMatrices, towerMatrices, ringMatrices } =
+    useMemo(() => {
+      const dGeo = new SphereGeometry(0.014, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2)
+      dGeo.rotateX(Math.PI / 2)
 
-    const ringMat = new MeshBasicMaterial({
-      color: new Color('#00e5c3'),
-      transparent: true,
-      opacity: 0.78,
-      blending: AdditiveBlending,
-      depthWrite: false,
-    })
+      const tGeo = new CylinderGeometry(0.002, 0.003, 0.024, 8)
+      tGeo.rotateX(Math.PI / 2)
+      tGeo.translate(0, 0, 0.012)
 
-    const nodes = COLONY_SPECS.map((spec) => {
-      const cfg = BODIES[spec.bodyId]
-      const center = getBodyPosition(spec.bodyId)
-      const destId: DestinationId =
-        spec.bodyId === 'mars' ? 'mars-red-frontier' : 'mercury-solar-frontier'
-      const basis = getDestinationCameraBasis(destId)
-      // Dirección desde el centro del planeta hacia la cámara orbital.
-      const toCam = basis.camPos.clone().sub(center).normalize()
-      const sunDir = getSunDirectionForBody(spec.bodyId)
-      // Colocamos las cúpulas cerca de la zona crepuscular del terminador visible.
-      const baseNormal = toCam.clone().lerp(sunDir, 0.22).normalize()
-      const tangentA = new Vector3().crossVectors(UP, baseNormal).normalize()
-      const tangentB = new Vector3().crossVectors(baseNormal, tangentA).normalize()
+      const rGeo = new RingGeometry(0.017, 0.023, 24)
+      rGeo.translate(0, 0, 0.001)
 
-      const domes = spec.offsets.map((o, idx) => {
-        const normal = baseNormal
-          .clone()
-          .addScaledVector(tangentA, o.dTheta)
-          .addScaledVector(tangentB, o.dPhi)
-          .normalize()
-        const surfacePoint = normal.clone().multiplyScalar(1.001)
-        const holder = new Object3D()
-        holder.position.copy(surfacePoint)
-        holder.lookAt(normal.clone().multiplyScalar(2))
-        return {
-          key: `${spec.bodyId}-dome-${idx}`,
-          pos: [surfacePoint.x, surfacePoint.y, surfacePoint.z] as [number, number, number],
-          quat: [holder.quaternion.x, holder.quaternion.y, holder.quaternion.z, holder.quaternion.w] as [
-            number,
-            number,
-            number,
-            number,
-          ],
-          scale: o.scale,
-        }
+      const dMat = new MeshStandardMaterial({
+        color: new Color('#d8e6ec'),
+        metalness: 0.85,
+        roughness: 0.2,
+        emissive: new Color('#ffba75'),
+        emissiveIntensity: 0.55,
       })
 
-      return {
-        bodyId: spec.bodyId,
-        planetPos: [center.x, center.y, center.z] as [number, number, number],
-        planetRadius: cfg.visualRadius,
-        domes,
-      }
-    })
+      const rMat = new MeshBasicMaterial({
+        color: new Color('#00e5c3'),
+        transparent: true,
+        opacity: 0.78,
+        blending: AdditiveBlending,
+        depthWrite: false,
+      })
 
-    return { domeGeo, ringGeo, towerGeo, domeMat, ringMat, nodes }
-  }, [])
+      const dMatrices: Matrix4[] = []
+      const tMatrices: Matrix4[] = []
+      const rMatrices: Matrix4[] = []
+      const dummy = new Object3D()
+
+      for (const spec of COLONY_SPECS) {
+        const cfg = BODIES[spec.bodyId]
+        const center = getBodyPosition(spec.bodyId)
+        const destId: DestinationId =
+          spec.bodyId === 'mars' ? 'mars-red-frontier' : 'mercury-solar-frontier'
+        const basis = getDestinationCameraBasis(destId)
+        const toCam = basis.camPos.clone().sub(center).normalize()
+        const sunDir = getSunDirectionForBody(spec.bodyId)
+        const baseNormal = toCam.clone().lerp(sunDir, 0.22).normalize()
+        const tangentA = new Vector3().crossVectors(UP, baseNormal).normalize()
+        const tangentB = new Vector3().crossVectors(baseNormal, tangentA).normalize()
+
+        for (const o of spec.offsets) {
+          const normal = baseNormal
+            .clone()
+            .addScaledVector(tangentA, o.dTheta)
+            .addScaledVector(tangentB, o.dPhi)
+            .normalize()
+          const worldPoint = center.clone().addScaledVector(normal, cfg.visualRadius * 1.001)
+          dummy.position.copy(worldPoint)
+          dummy.lookAt(worldPoint.clone().add(normal))
+          dummy.scale.setScalar(cfg.visualRadius * o.scale)
+          dummy.updateMatrix()
+
+          const m = dummy.matrix.clone()
+          dMatrices.push(m)
+          tMatrices.push(m)
+          rMatrices.push(m)
+        }
+      }
+
+      return {
+        domeGeo: dGeo,
+        ringGeo: rGeo,
+        towerGeo: tGeo,
+        domeMat: dMat,
+        ringMat: rMat,
+        domeMatrices: dMatrices,
+        towerMatrices: tMatrices,
+        ringMatrices: rMatrices,
+      }
+    }, [])
+
+  const domesRef = useRef<InstancedMesh>(null)
+  const towersRef = useRef<InstancedMesh>(null)
+  const ringsRef = useRef<InstancedMesh>(null)
+
+  useLayoutEffect(() => {
+    if (!domesRef.current || !towersRef.current || !ringsRef.current) return
+    applyInstancedColonyMatrices(
+      domesRef.current,
+      towersRef.current,
+      ringsRef.current,
+      domeMatrices,
+      towerMatrices,
+      ringMatrices,
+    )
+  }, [domeMatrices, towerMatrices, ringMatrices])
 
   useLayoutEffect(
     () => () => {
-      clusters.domeGeo.dispose()
-      clusters.ringGeo.dispose()
-      clusters.towerGeo.dispose()
-      clusters.domeMat.dispose()
-      clusters.ringMat.dispose()
+      domeGeo.dispose()
+      towerGeo.dispose()
+      ringGeo.dispose()
+      domeMat.dispose()
+      ringMat.dispose()
     },
-    [clusters],
+    [domeGeo, towerGeo, ringGeo, domeMat, ringMat],
   )
 
+  const count = domeMatrices.length
+
   return (
-    <group name="surface-colonies">
-      {clusters.nodes.map((c) => (
-        <group key={c.bodyId} position={c.planetPos} scale={c.planetRadius}>
-          {c.domes.map((d) => (
-            <group key={d.key} position={d.pos} quaternion={d.quat} scale={d.scale}>
-              <mesh
-                geometry={clusters.domeGeo}
-                material={clusters.domeMat}
-                rotation={[Math.PI / 2, 0, 0]}
-              />
-              <mesh
-                geometry={clusters.towerGeo}
-                material={clusters.domeMat}
-                rotation={[Math.PI / 2, 0, 0]}
-                position={[0, 0, 0.012]}
-              />
-              <mesh
-                geometry={clusters.ringGeo}
-                material={clusters.ringMat}
-                position={[0, 0, 0.001]}
-                renderOrder={3}
-              />
-            </group>
-          ))}
-        </group>
-      ))}
+    <group name="instanced-surface-colonies">
+      <instancedMesh ref={domesRef} args={[domeGeo, domeMat, count]} frustumCulled={false} />
+      <instancedMesh ref={towersRef} args={[towerGeo, domeMat, count]} frustumCulled={false} />
+      <instancedMesh
+        ref={ringsRef}
+        args={[ringGeo, ringMat, count]}
+        renderOrder={3}
+        frustumCulled={false}
+      />
     </group>
   )
 }
 
 /* ================================================================== */
-/* Estaciones e instalaciones orbitales GLB                           */
+/* Cinturón de asteroides instanciado (InstancedMesh — FASE 6)        */
 /* ================================================================== */
-export function DestinationEnvironments() {
-  const rawModels = use(loadAllStationModels())
-  const placements = useMemo(() => computeStationPlacements(), [])
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
 
-  const instances = useMemo(() => {
-    return placements.map((p) => {
-      const template = rawModels[p.spec.modelFile]!
+function populateAsteroidMatrices(mesh: InstancedMesh, matrices: Matrix4[]): void {
+  for (let i = 0; i < matrices.length; i++) {
+    mesh.setMatrixAt(i, matrices[i]!)
+  }
+  mesh.instanceMatrix.needsUpdate = true
+}
+
+function InstancedAsteroidBelt() {
+  const quality = useQuality()
+  const show = useNavigationStore(
+    (s) =>
+      s.state === 'solar_system' ||
+      (s.state === 'transitioning' && s.transitionGoal === 'solar_system'),
+  )
+  const count = quality.tier === 'low' ? 160 : quality.tier === 'medium' ? 280 : 420
+
+  const { geometry, material, matrices } = useMemo(() => {
+    const rand = mulberry32(90421)
+    const geo = new DodecahedronGeometry(0.11, 0)
+    const mat = new MeshStandardMaterial({
+      color: new Color('#7e756c'),
+      roughness: 0.9,
+      metalness: 0.15,
+    })
+
+    const mats: Matrix4[] = []
+    const pos = new Vector3()
+    const quat = new Quaternion()
+    const scale = new Vector3()
+
+    for (let i = 0; i < count; i++) {
+      const angle = rand() * Math.PI * 2
+      const radius = 41.2 + (rand() - 0.5) * 4.8
+      const y = (rand() - 0.5) * 1.4
+      pos.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius)
+      quat.setFromAxisAngle(
+        new Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize(),
+        rand() * Math.PI * 2,
+      )
+      const s = 0.35 + Math.pow(rand(), 2.2) * 1.25
+      scale.set(s * (0.8 + rand() * 0.4), s * (0.7 + rand() * 0.5), s)
+
+      const m = new Matrix4().compose(pos, quat, scale)
+      mats.push(m)
+    }
+
+    return { geometry: geo, material: mat, matrices: mats }
+  }, [count])
+
+  const meshRef = useRef<InstancedMesh>(null)
+
+  useLayoutEffect(() => {
+    if (!meshRef.current) return
+    populateAsteroidMatrices(meshRef.current, matrices)
+  }, [matrices])
+
+  useLayoutEffect(
+    () => () => {
+      geometry.dispose()
+      material.dispose()
+    },
+    [geometry, material],
+  )
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geometry, material, count]}
+      visible={show}
+      name="instanced-asteroid-belt"
+    />
+  )
+}
+
+/* ================================================================== */
+/* Estaciones orbitales GLB con carga diferida y activación selectiva */
+/* ================================================================== */
+interface LoadedStationInstance extends ComputedStationPlacement {
+  scene: Group
+  rotor: Object3D | undefined
+}
+
+export function DestinationEnvironments() {
+  const placements = useMemo(() => computeStationPlacements(), [])
+  const sceneReady = useNavigationStore((s) => s.sceneReady)
+  const state = useNavigationStore((s) => s.state)
+  const transitionGoal = useNavigationStore((s) => s.transitionGoal)
+  const selectedDestinationId = useNavigationStore((s) => s.selectedDestinationId)
+
+  const [loadedMap, setLoadedMap] = useState<Record<string, Group>>({})
+
+  // Priorizar inmediatamente el modelo del destino seleccionado.
+  useEffect(() => {
+    if (!selectedDestinationId) return
+    const spec = STATION_SPECS.find((s) => s.destinationId === selectedDestinationId)
+    if (!spec || loadedMap[spec.modelFile]) return
+    let cancelled = false
+    loadStationModel(spec.modelFile)
+      .then((scene) => {
+        if (!cancelled) {
+          setLoadedMap((prev) => (prev[spec.modelFile] ? prev : { ...prev, [spec.modelFile]: scene }))
+        }
+      })
+      .catch((err) => console.warn(`[solaris] Error cargando ${spec.modelFile}`, err))
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDestinationId, loadedMap])
+
+  // Precarga diferida en segundo plano cuando la escena inicial ya está lista.
+  useEffect(() => {
+    if (!sceneReady) return
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      for (const spec of STATION_SPECS) {
+        loadStationModel(spec.modelFile)
+          .then((scene) => {
+            if (!cancelled) {
+              setLoadedMap((prev) =>
+                prev[spec.modelFile] ? prev : { ...prev, [spec.modelFile]: scene },
+              )
+            }
+          })
+          .catch(() => {
+            /* silencioso en precarga */
+          })
+      }
+    }, 900)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [sceneReady])
+
+  const instances = useMemo<LoadedStationInstance[]>(() => {
+    const out: LoadedStationInstance[] = []
+    for (const p of placements) {
+      const template = loadedMap[p.spec.modelFile]
+      if (!template) continue
       const scene = template.clone(true)
       const rotor = scene.getObjectByName('rotor_ring')
       if (p.spec.faceSun) {
@@ -447,21 +608,27 @@ export function DestinationEnvironments() {
       } else {
         scene.rotation.set(...p.spec.tilt)
       }
-      return {
-        ...p,
-        scene,
-        rotor,
-      }
-    })
-  }, [rawModels, placements])
+      out.push({ ...p, scene, rotor })
+    }
+    return out
+  }, [loadedMap, placements])
 
   const holderRefs = useRef<Record<string, Group | null>>({})
   const timeRef = useRef(0)
 
+  const activeDestinationId =
+    state === 'planet_detail' ||
+    state === 'station_detail' ||
+    (state === 'transitioning' && transitionGoal === 'destination')
+      ? selectedDestinationId
+      : null
+
   useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1)
+    if (!activeDestinationId) return
+    const dt = Math.min(delta, 0.1) * getMotionScale()
     timeRef.current += dt
     instances.forEach((inst, i) => {
+      if (inst.spec.destinationId !== activeDestinationId) return
       animateStationInstance(
         holderRefs.current[inst.spec.destinationId] ?? null,
         inst.rotor,
@@ -476,39 +643,47 @@ export function DestinationEnvironments() {
   return (
     <group name="destination-environments">
       <CompanionMoons />
-      <SurfaceColonies />
+      <InstancedSurfaceColonies />
+      <InstancedAsteroidBelt />
 
-      {instances.map((inst) => (
-        <group
-          key={inst.spec.destinationId}
-          position={[inst.position.x, inst.position.y, inst.position.z]}
-          scale={inst.scale}
-          name={`station-${inst.spec.destinationId}`}
-        >
-          {/* Iluminación local PBR coherente con la dirección solar y el albedo planetario */}
-          <pointLight
-            position={[inst.sunDir.x * 6, inst.sunDir.y * 6, inst.sunDir.z * 6]}
-            intensity={4.2}
-            distance={14}
-            decay={1.2}
-            color="#fff5e4"
-          />
-          <pointLight
-            position={[inst.planetDir.x * 4, inst.planetDir.y * 4, inst.planetDir.z * 4]}
-            intensity={1.6}
-            distance={10}
-            decay={1.4}
-            color={inst.spec.bounceColor}
-          />
+      {instances.map((inst) => {
+        const isActive = inst.spec.destinationId === activeDestinationId
+        return (
           <group
-            ref={(node) => {
-              holderRefs.current[inst.spec.destinationId] = node
-            }}
+            key={inst.spec.destinationId}
+            visible={isActive}
+            position={[inst.position.x, inst.position.y, inst.position.z]}
+            scale={inst.scale}
+            name={`station-${inst.spec.destinationId}`}
           >
-            <primitive object={inst.scene} />
+            {isActive && (
+              <>
+                <pointLight
+                  position={[inst.sunDir.x * 6, inst.sunDir.y * 6, inst.sunDir.z * 6]}
+                  intensity={4.2}
+                  distance={14}
+                  decay={1.2}
+                  color="#fff5e4"
+                />
+                <pointLight
+                  position={[inst.planetDir.x * 4, inst.planetDir.y * 4, inst.planetDir.z * 4]}
+                  intensity={1.6}
+                  distance={10}
+                  decay={1.4}
+                  color={inst.spec.bounceColor}
+                />
+              </>
+            )}
+            <group
+              ref={(node) => {
+                holderRefs.current[inst.spec.destinationId] = node
+              }}
+            >
+              <primitive object={inst.scene} />
+            </group>
           </group>
-        </group>
-      ))}
+        )
+      })}
     </group>
   )
 }
