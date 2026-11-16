@@ -6,6 +6,7 @@ import { DestinationBar } from '@/components/destinations/DestinationBar'
 import { CommercialPanel } from '@/components/packages/CommercialPanel'
 import { BookingModal } from '@/components/packages/BookingModal'
 import { LoadingScreen } from '@/components/loading/LoadingScreen'
+import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation'
 
 /**
  * Raíz de la aplicación: capa 3D (canvas) y capa HTML (UI) desacopladas.
@@ -14,6 +15,8 @@ import { LoadingScreen } from '@/components/loading/LoadingScreen'
  * selección directa de planetas (FASE 3) llegue al canvas.
  */
 export default function App() {
+  useKeyboardNavigation()
+
   return (
     <>
       <SceneCanvas />

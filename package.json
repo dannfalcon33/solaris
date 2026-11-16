@@ -10,7 +10,8 @@
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
     "textures": "node scripts/build-textures.mjs",
-    "models": "node scripts/build-models.mjs"
+    "models": "node scripts/build-models.mjs",
+    "qa": "node scripts/qa-verify.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

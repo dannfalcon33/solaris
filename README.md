@@ -4,8 +4,9 @@ Experiencia web 3D ficticia de turismo espacial (React + Three.js + WebGL).
 Plan completo: [`SOLARIS_ENGINEERING_PLAN.md`](./SOLARIS_ENGINEERING_PLAN.md).
 Registro de texturas, modelos y licencias: [`docs/ASSETS.md`](./docs/ASSETS.md).
 Auditoría de rendimiento WebGL: [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md).
+Reporte de QA final: [`docs/QA_REPORT.md`](./docs/QA_REPORT.md).
 
-**Estado:** FASE 6 — optimización WebGL (LOD por distancia, Adaptive DPR, degradación dinámica de calidad, InstancedMesh, carga diferida de `.glb`, detección de pérdida de contexto y fallback sin WebGL).
+**Estado:** FASE 7 completada — proyecto auditado y listo para despliegue en producción.
 
 ## Requisitos
 
@@ -18,6 +19,8 @@ Auditoría de rendimiento WebGL: [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md).
 | ------------------- | ---------------------------------------------------------------- |
 | `npm install`       | Instala dependencias                                             |
 | `npm run textures`  | Genera niveles `2k / 4k / 8k` WebP desde `assets-src/`           |
+| `npm run models`    | Genera los 6 modelos `.glb` en `public/models/`                  |
+| `npm run qa`        | Ejecuta la auditoría automatizada de assets, SEO y configuración |
 | `npm run dev`       | Servidor de desarrollo (Vite)                                    |
 | `npm run build`     | Typecheck estricto + build de producción                         |
 | `npm run preview`   | Sirve el build de `dist/`                                        |

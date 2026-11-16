@@ -55,8 +55,17 @@ export function HeroOverlay() {
           <DataReadout label="Altitud" value="408" unit="km" ratio={0.35} />
           <DataReadout label="Velocidad" value="7,66" unit="km/s" ratio={0.7} />
           <DataReadout label="Órbita" value="92,7" unit="min" ratio={0.5} />
-          <p className="col-span-3 font-mono text-[9px] uppercase tracking-[0.25em] text-text-secondary/70">
-            Telemetría de referencia · simulada
+          <p className="col-span-3 font-mono text-[9px] uppercase tracking-[0.22em] text-text-secondary/70">
+            Telemetría simulada · Texturas:{' '}
+            <a
+              href="https://www.solarsystemscope.com/textures/"
+              target="_blank"
+              rel="noreferrer"
+              className="pointer-events-auto underline decoration-teal/40 hover:text-teal"
+            >
+              Solar System Scope (CC BY 4.0)
+            </a>{' '}
+            / NASA
           </p>
         </dl>
       </div>
