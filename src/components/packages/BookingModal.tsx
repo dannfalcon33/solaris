@@ -15,23 +15,18 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { getDestination } from '@/data/destinations'
 import { getDestinationPackage, getPackagesByDestination } from '@/data/packages'
+import { useTranslations, type UiTranslations } from '@/i18n/translations'
 import { useNavigationStore } from '@/stores/navigation.store'
-import { useUiStore, type BookingStep } from '@/stores/ui.store'
+import { useUiStore, type BookingStep, type Locale } from '@/stores/ui.store'
 import type { Destination, ExpeditionPackage, PackageTier } from '@/types'
 import { formatUsd } from '@/utils/format'
 import { cn } from '@/utils/cn'
-
-const DEPARTURES = [
-  'Ventana Alfa · Marzo 2031',
-  'Ventana Beta · Junio 2031',
-  'Ventana Gamma · Septiembre 2031',
-  'Ventana Delta · Diciembre 2031',
-]
 
 const field =
   'h-11 w-full border border-white/15 bg-bg/60 px-3 text-sm text-text-primary outline-none transition placeholder:text-text-secondary/50 focus:border-teal focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan/50'
 
 export function BookingModal() {
+  const { locale, t } = useTranslations()
   const booking = useUiStore((s) => s.booking)
   const closeBooking = useUiStore((s) => s.closeBooking)
   const selectTier = useUiStore((s) => s.selectTier)
@@ -41,8 +36,10 @@ export function BookingModal() {
 
   return (
     <BookingDialog
-      key={`${destinationId}-${booking.tier}-${booking.step}`}
-      destination={getDestination(destinationId)}
+      key={`${destinationId}-${booking.tier}-${booking.step}-${locale}`}
+      destination={getDestination(destinationId, locale)}
+      locale={locale}
+      t={t.modal}
       initialTier={booking.tier}
       initialStep={booking.step}
       onSelectTier={selectTier}
@@ -51,16 +48,15 @@ export function BookingModal() {
   )
 }
 
-function DemoNotice() {
+function DemoNotice({ t }: { t: UiTranslations['modal'] }) {
   return (
     <div className="mb-5 flex items-start gap-3 border border-warning/30 bg-warning/[0.06] p-3 text-xs leading-relaxed text-warning">
       <Info className="mt-0.5 size-4 shrink-0" />
       <p>
         <strong className="font-semibold uppercase tracking-[0.15em]">
-          Catálogo y reserva de demostración.
+          {t.demoNoticeStrong}
         </strong>{' '}
-        Precios, duraciones, fechas y disponibilidad son ficticios. No se procesa ningún pago real ni
-        se almacena ningún dato personal.
+        {t.demoNoticeBody}
       </p>
     </div>
   )
@@ -82,12 +78,16 @@ function Row({ icon, label, children }: { icon: ReactNode; label: string; childr
 
 function BookingDialog({
   destination,
+  locale,
+  t,
   initialTier,
   initialStep,
   onSelectTier,
   onClose,
 }: {
   destination: Destination
+  locale: Locale
+  t: UiTranslations['modal']
   initialTier: PackageTier
   initialStep: BookingStep
   onSelectTier: (tier: PackageTier) => void
@@ -97,12 +97,12 @@ function BookingDialog({
   const [activeTier, setActiveTier] = useState<PackageTier>(initialTier)
   const [passengerName, setPassengerName] = useState('')
   const [passengerEmail, setPassengerEmail] = useState('')
-  const [departureWindow, setDepartureWindow] = useState(DEPARTURES[1]!)
+  const [departureWindow, setDepartureWindow] = useState<string>(t.departures[1])
   const [travelers, setTravelers] = useState(2)
   const [code, setCode] = useState('')
 
-  const allPackages = getPackagesByDestination(destination.id)
-  const pkg = getDestinationPackage(destination.id, activeTier)
+  const allPackages = getPackagesByDestination(destination.id, locale)
+  const pkg = getDestinationPackage(destination.id, activeTier, locale)
   const total = pkg.priceUsd * travelers
 
   const handleTierChange = (tier: PackageTier) => {
@@ -120,34 +120,34 @@ function BookingDialog({
 
   const title =
     step === 'done'
-      ? 'Pase de embarque simulado emitido'
+      ? t.titleDone
       : step === 'compare'
-        ? `Comparador · ${destination.name}`
+        ? `${t.titleComparePrefix} · ${destination.name}`
         : `${pkg.tierLabel}: ${pkg.name}`
 
   const eyebrow =
     step === 'details'
-      ? `${destination.name} · Detalles del paquete`
+      ? `${destination.name} · ${t.eyebrowDetailsSuffix}`
       : step === 'compare'
-        ? 'Explorer vs Voyager vs Infinity'
+        ? t.eyebrowCompare
         : step === 'form'
-          ? 'Solicitud de reserva demostrativa'
-          : 'Confirmación simulada'
+          ? t.eyebrowForm
+          : t.eyebrowDone
 
   return (
-    <Modal title={title} eyebrow={eyebrow} onClose={onClose}>
+    <Modal title={title} eyebrow={eyebrow} closeLabel={t.closeAria} onClose={onClose}>
       {step !== 'done' && (
         <>
           <div
             role="tablist"
-            aria-label="Secciones del catálogo"
+            aria-label={t.tabsAria}
             className="mb-4 flex border-b border-white/10"
           >
             {(
               [
-                { id: 'details', label: 'Detalles' },
-                { id: 'compare', label: 'Comparador (3)' },
-                { id: 'form', label: 'Book Expedition' },
+                { id: 'details', label: t.tabDetails },
+                { id: 'compare', label: t.tabCompare },
+                { id: 'form', label: t.tabBook },
               ] as const
             ).map((tab) => {
               const active = step === tab.id
@@ -174,7 +174,7 @@ function BookingDialog({
               )
             })}
           </div>
-          <DemoNotice />
+          <DemoNotice t={t} />
         </>
       )}
 
@@ -183,7 +183,6 @@ function BookingDialog({
       {/* ============================================================ */}
       {step === 'details' && (
         <div className="space-y-5">
-          {/* Selector rápido de categoría dentro de detalles */}
           <div className="grid grid-cols-3 gap-2">
             {allPackages.map((item) => {
               const isSelected = item.tier === activeTier
@@ -204,7 +203,7 @@ function BookingDialog({
                   </p>
                   <p className="truncate text-xs font-medium text-text-primary">{item.name}</p>
                   <p className="mt-1 font-mono text-xs text-text-secondary">
-                    {formatUsd(item.priceUsd)}
+                    {formatUsd(item.priceUsd, locale)}
                   </p>
                 </button>
               )
@@ -213,24 +212,30 @@ function BookingDialog({
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="teal">{destination.bodyName}</Badge>
-            <Badge>{pkg.durationDays} días (ficticio)</Badge>
-            <Badge tone="warning">{formatUsd(pkg.priceUsd)} / pers. · ficticio</Badge>
-            <Badge>{pkg.availableSeats} plazas (sim.)</Badge>
+            <Badge>
+              {pkg.durationDays} {t.daysFictional}
+            </Badge>
+            <Badge tone="warning">
+              {formatUsd(pkg.priceUsd, locale)} {t.perPersonFictional}
+            </Badge>
+            <Badge>
+              {pkg.availableSeats} {t.seatsSim}
+            </Badge>
           </div>
 
           <p className="text-sm leading-relaxed text-text-secondary">{pkg.description}</p>
 
           <div className="grid gap-5 border-t border-white/10 pt-4 sm:grid-cols-2">
-            <Row icon={<Home />} label="Alojamiento asignado">
+            <Row icon={<Home />} label={t.assignedLodging}>
               {pkg.lodging}
             </Row>
-            <Row icon={<Satellite />} label="Instalación de destino (ficción)">
+            <Row icon={<Satellite />} label={t.destinationFacility}>
               <p className="font-medium">{destination.facility.facilityName}</p>
               <p className="mt-0.5 font-mono text-xs text-text-secondary">
                 {destination.facility.orbitProfile}
               </p>
             </Row>
-            <Row icon={<Sparkles />} label="Servicios incluidos">
+            <Row icon={<Sparkles />} label={t.includedServices}>
               <ul className="space-y-1.5">
                 {pkg.services.map((s) => (
                   <li key={s} className="flex gap-2 text-xs leading-relaxed">
@@ -240,7 +245,7 @@ function BookingDialog({
                 ))}
               </ul>
             </Row>
-            <Row icon={<Clock />} label="Actividades de expedición">
+            <Row icon={<Clock />} label={t.expeditionActivities}>
               <ul className="space-y-1.5">
                 {pkg.activities.map((a) => (
                   <li key={a} className="flex gap-2 text-xs leading-relaxed">
@@ -259,11 +264,11 @@ function BookingDialog({
               icon={<Columns3 className="size-3.5" />}
               onClick={() => setStep('compare')}
             >
-              Comparar las 3 categorías
+              {t.compare3CategoriesBtn}
             </Button>
             <div className="flex flex-col-reverse gap-2 sm:flex-row">
               <Button variant="ghost" size="sm" onClick={onClose}>
-                Cerrar
+                {t.closeBtn}
               </Button>
               <Button
                 variant="primary"
@@ -271,7 +276,7 @@ function BookingDialog({
                 icon={<Rocket className="size-3.5" />}
                 onClick={() => setStep('form')}
               >
-                Book expedition
+                {t.bookCta}
               </Button>
             </div>
           </div>
@@ -305,16 +310,16 @@ function BookingDialog({
                         {item.name}
                       </h3>
                       <p className="mt-1 font-mono text-lg text-teal">
-                        {formatUsd(item.priceUsd)}
+                        {formatUsd(item.priceUsd, locale)}
                       </p>
                       <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-warning">
-                        Precio ficticio · {item.durationDays} días · {item.availableSeats} plazas
+                        {t.priceFictionalLine(item.durationDays, item.availableSeats)}
                       </p>
                     </div>
 
                     <div className="border-t border-white/10 pt-2.5">
                       <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-secondary">
-                        Alojamiento
+                        {t.lodgingHeader}
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-text-primary">
                         {item.lodging}
@@ -323,7 +328,7 @@ function BookingDialog({
 
                     <div className="border-t border-white/10 pt-2.5">
                       <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-secondary">
-                        Servicios clave
+                        {t.keyServicesHeader}
                       </p>
                       <ul className="mt-1 space-y-1">
                         {item.services.map((s) => (
@@ -337,7 +342,7 @@ function BookingDialog({
 
                     <div className="border-t border-white/10 pt-2.5">
                       <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-secondary">
-                        Actividades
+                        {t.activitiesHeader}
                       </p>
                       <ul className="mt-1 space-y-1">
                         {item.activities.map((a) => (
@@ -360,7 +365,7 @@ function BookingDialog({
                         setStep('form')
                       }}
                     >
-                      Elegir {item.tierLabel}
+                      {t.choosePrefix} {item.tierLabel}
                     </Button>
                   </div>
                 </div>
@@ -370,7 +375,7 @@ function BookingDialog({
 
           <div className="flex justify-end gap-2 border-t border-white/10 pt-4">
             <Button variant="ghost" size="sm" onClick={() => setStep('details')}>
-              Volver a detalles
+              {t.backToDetailsBtn}
             </Button>
           </div>
         </div>
@@ -383,7 +388,7 @@ function BookingDialog({
         <form onSubmit={submit} className="space-y-4">
           <div>
             <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.22em] text-text-secondary">
-              Paquete seleccionado para {destination.name}
+              {t.selectedPackageFor} {destination.name}
             </span>
             <div className="grid grid-cols-3 gap-2">
               {allPackages.map((item) => {
@@ -405,7 +410,7 @@ function BookingDialog({
                     </p>
                     <p className="truncate text-xs font-medium text-text-primary">{item.name}</p>
                     <p className="mt-0.5 font-mono text-xs text-text-secondary">
-                      {formatUsd(item.priceUsd)}
+                      {formatUsd(item.priceUsd, locale)}
                     </p>
                   </button>
                 )
@@ -416,7 +421,7 @@ function BookingDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.22em] text-text-secondary">
-                Pasajero principal
+                {t.mainPassenger}
               </span>
               <input
                 required
@@ -430,7 +435,7 @@ function BookingDialog({
             </label>
             <label className="block">
               <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.22em] text-text-secondary">
-                Correo de telemetría
+                {t.telemetryEmail}
               </span>
               <input
                 required
@@ -445,7 +450,7 @@ function BookingDialog({
             </label>
             <label className="block">
               <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.22em] text-text-secondary">
-                Viajeros (máx. {Math.min(6, pkg.availableSeats)})
+                {t.travelersMax(Math.min(6, pkg.availableSeats))}
               </span>
               <input
                 required
@@ -467,7 +472,7 @@ function BookingDialog({
             </label>
             <label className="block">
               <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.22em] text-text-secondary">
-                Ventana de lanzamiento (ficticia)
+                {t.launchWindow}
               </span>
               <select
                 name="departure"
@@ -475,7 +480,7 @@ function BookingDialog({
                 onChange={(e) => setDepartureWindow(e.target.value)}
                 className={field}
               >
-                {DEPARTURES.map((d) => (
+                {t.departures.map((d) => (
                   <option key={d} value={d} className="bg-surface">
                     {d}
                   </option>
@@ -486,29 +491,25 @@ function BookingDialog({
 
           <label className="flex items-start gap-3 text-xs leading-relaxed text-text-secondary">
             <input required type="checkbox" className="mt-0.5 size-4 accent-teal" />
-            Entiendo que esta solicitud es una demostración interactiva de portafolio con precios y
-            disponibilidad ficticios.
+            {t.consentText}
           </label>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border border-white/10 bg-white/[0.02] px-4 py-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-text-secondary">
-                Total estimado ({travelers} {travelers === 1 ? 'viajero' : 'viajeros'} ·{' '}
-                {pkg.durationDays} días)
+                {t.estimatedTotal(travelers, pkg.durationDays)}
               </p>
-              <p className="font-mono text-[10px] text-warning">
-                Importe ficticio de demostración · sin cargo real
-              </p>
+              <p className="font-mono text-[10px] text-warning">{t.fictionalAmountNote}</p>
             </div>
-            <span className="font-mono text-xl text-teal">{formatUsd(total)}</span>
+            <span className="font-mono text-xl text-teal">{formatUsd(total, locale)}</span>
           </div>
 
           <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setStep('details')}>
-              Ver detalles
+              {t.backToDetailsBtn}
             </Button>
             <Button variant="primary" type="submit" icon={<Rocket className="size-4" />}>
-              Confirmar reserva simulada
+              {t.confirmSimulatedBtn}
             </Button>
           </div>
         </form>
@@ -525,11 +526,11 @@ function BookingDialog({
             </div>
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-teal">
-                Expedición registrada (modo simulación)
+                {t.registeredBadge}
               </p>
               <p className="mt-0.5 text-sm text-text-primary">
-                Reserva demostrativa a nombre de{' '}
-                <strong>{passengerName || 'Viajero SOLARIS'}</strong> ({passengerEmail || 'demo'})
+                {t.demoBookingFor} <strong>{passengerName || 'SOLARIS Traveler'}</strong> (
+                {passengerEmail || 'demo'})
               </p>
             </div>
           </div>
@@ -538,20 +539,20 @@ function BookingDialog({
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
               <div>
                 <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-text-secondary">
-                  Localizador de misión
+                  {t.missionLocator}
                 </p>
                 <p className="mt-0.5 flex items-center gap-2 font-mono text-base tracking-[0.28em] text-teal">
                   <CalendarDays className="size-4" />
                   {code}
                 </p>
               </div>
-              <Badge tone="warning">Simulación · Sin valor comercial</Badge>
+              <Badge tone="warning">{t.simulationBadge}</Badge>
             </div>
 
             <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
               <div>
                 <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-secondary">
-                  Destino e instalación
+                  {t.destAndFacility}
                 </dt>
                 <dd className="mt-0.5 font-medium text-text-primary">{destination.name}</dd>
                 <dd className="font-mono text-[11px] text-text-secondary">
@@ -560,7 +561,7 @@ function BookingDialog({
               </div>
               <div>
                 <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-secondary">
-                  Paquete y alojamiento
+                  {t.packageAndLodging}
                 </dt>
                 <dd className="mt-0.5 font-medium text-text-primary">
                   {pkg.tierLabel} — {pkg.name}
@@ -569,32 +570,29 @@ function BookingDialog({
               </div>
               <div>
                 <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-secondary">
-                  Ventana y duración ficticia
+                  {t.windowAndDuration}
                 </dt>
                 <dd className="mt-0.5 text-text-primary">{departureWindow}</dd>
                 <dd className="font-mono text-[11px] text-text-secondary">
-                  {pkg.durationDays} días · {travelers}{' '}
-                  {travelers === 1 ? 'pasajero' : 'pasajeros'}
+                  {t.passengersCount(pkg.durationDays, travelers)}
                 </dd>
               </div>
               <div>
                 <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-text-secondary">
-                  Importe total simulado
+                  {t.simulatedTotalAmount}
                 </dt>
-                <dd className="mt-0.5 font-mono text-base text-teal">{formatUsd(total)}</dd>
-                <dd className="font-mono text-[10px] text-warning">
-                  Demostración · sin cobro · sin datos almacenados
-                </dd>
+                <dd className="mt-0.5 font-mono text-base text-teal">{formatUsd(total, locale)}</dd>
+                <dd className="font-mono text-[10px] text-warning">{t.demoNoChargeNote}</dd>
               </div>
             </dl>
           </div>
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" size="sm" onClick={() => setStep('compare')}>
-              Ver otros paquetes
+              {t.viewOtherPackagesBtn}
             </Button>
             <Button variant="primary" size="sm" onClick={onClose}>
-              Finalizar y volver a la órbita
+              {t.finishAndReturnBtn}
             </Button>
           </div>
         </div>

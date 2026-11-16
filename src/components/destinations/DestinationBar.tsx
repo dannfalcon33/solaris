@@ -1,12 +1,14 @@
 import { ArrowLeft, Globe, Satellite } from 'lucide-react'
 import { Fade } from '@/components/ui/Fade'
-import { destinations, getDestination } from '@/data/destinations'
+import { getDestination, getDestinations } from '@/data/destinations'
 import { BODIES } from '@/engine/config/solarSystemLayout'
+import { useTranslations } from '@/i18n/translations'
 import { useNavigationStore } from '@/stores/navigation.store'
 import { cn } from '@/utils/cn'
 
 /** Barra inferior de selección de destinos, sincronizada con la escena 3D. */
 export function DestinationBar() {
+  const { locale, t } = useTranslations()
   const state = useNavigationStore((s) => s.state)
   const transitionGoal = useNavigationStore((s) => s.transitionGoal)
   const selectedId = useNavigationStore((s) => s.selectedDestinationId)
@@ -23,6 +25,7 @@ export function DestinationBar() {
     (state === 'transitioning' && transitionGoal !== 'earth_hero')
 
   const activeId = state === 'solar_system' ? null : selectedId
+  const destinationList = getDestinations(locale)
 
   return (
     <Fade show={visible} from="bottom" className="absolute inset-x-0 bottom-0 z-10 px-3 pb-3 sm:px-8 sm:pb-6">
@@ -37,7 +40,7 @@ export function DestinationBar() {
               className="inline-flex items-center gap-1.5 border border-teal/35 bg-surface/85 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-teal transition hover:border-teal hover:bg-teal/15 focus-visible:outline-2 focus-visible:outline-cyan"
             >
               <ArrowLeft className="size-3" />
-              Tierra
+              {t.bar.earthBtn}
             </button>
           ) : (
             <span />
@@ -50,28 +53,30 @@ export function DestinationBar() {
             {isTransitioning && transitionGoal === 'destination' && selectedId ? (
               <>
                 <span className="size-1.5 animate-pulse-dot rounded-full bg-cyan" aria-hidden="true" />
-                <span className="text-cyan">En tránsito · {getDestination(selectedId).name}</span>
+                <span className="text-cyan">
+                  {t.bar.inTransit} · {getDestination(selectedId, locale).name}
+                </span>
               </>
             ) : isTransitioning && transitionGoal === 'solar_system' ? (
               <>
                 <span className="size-1.5 animate-pulse-dot rounded-full bg-cyan" aria-hidden="true" />
-                <span className="text-cyan">Abriendo vista general · Sistema Solar</span>
+                <span className="text-cyan">{t.bar.openingOverview}</span>
               </>
             ) : state === 'solar_system' && hoveredBodyId ? (
               <span className="text-teal">
-                Objetivo · {BODIES[hoveredBodyId].name} — clic para viajar
+                {t.bar.targetPrefix} · {BODIES[hoveredBodyId].name} — {t.bar.clickToTravel}
               </span>
             ) : state === 'solar_system' ? (
-              'Selecciona un planeta en 3D o un destino inferior'
+              t.bar.selectPrompt
             ) : null}
           </p>
 
           <span className="hidden w-16 sm:inline-block" aria-hidden="true" />
         </div>
 
-        <nav aria-label="Destinos" className="hud-panel">
+        <nav aria-label={t.bar.destinationsAria} className="hud-panel">
           <ul className="hud-scroll flex snap-x overflow-x-auto">
-            {destinations.map((d) => {
+            {destinationList.map((d) => {
               const active = d.id === activeId
               const hoveredFrom3D = state === 'solar_system' && hoveredBodyId === d.bodyId
               const Icon = d.kind === 'station' ? Satellite : Globe

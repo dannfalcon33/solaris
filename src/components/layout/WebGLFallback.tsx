@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useQualityStore } from '@/engine/config/quality'
 import { DESTINATION_TO_BODY } from '@/engine/config/solarSystemLayout'
+import { useTranslations } from '@/i18n/translations'
 import { useNavigationStore } from '@/stores/navigation.store'
 import type { CelestialBodyId } from '@/types'
 
@@ -24,6 +25,7 @@ const FALLBACK_TEXTURES: Record<CelestialBodyId, { tex: string; halo: string }> 
  * comercial 100 % operativos.
  */
 export function WebGLFallback({ reason }: { reason: 'unsupported' | 'context_lost' }) {
+  const { t } = useTranslations()
   const state = useNavigationStore((s) => s.state)
   const transitionGoal = useNavigationStore((s) => s.transitionGoal)
   const selectedDestinationId = useNavigationStore((s) => s.selectedDestinationId)
@@ -54,15 +56,13 @@ export function WebGLFallback({ reason }: { reason: 'unsupported' | 'context_los
   return (
     <div
       className="fixed inset-0 z-0 flex items-center justify-center overflow-hidden bg-bg"
-      aria-label="Vista planetaria de compatibilidad 2D"
+      aria-label={t.fallback.ariaLabel}
     >
-      {/* Fondo estelar 2k */}
       <div
         className="absolute inset-0 bg-cover bg-center opacity-35"
         style={{ backgroundImage: `url(${BASE}textures/sky/2k/milkyway.webp)` }}
       />
 
-      {/* Esfera planetaria 2.5D con iluminación y terminador CSS */}
       <div
         className="relative size-72 rounded-full bg-cover bg-center transition-all duration-700 sm:size-96 lg:size-[28rem]"
         style={{
@@ -71,19 +71,18 @@ export function WebGLFallback({ reason }: { reason: 'unsupported' | 'context_los
         }}
       />
 
-      {/* Aviso discreto de estado WebGL */}
       <div className="hud-panel pointer-events-auto fixed left-4 top-20 z-30 flex max-w-sm items-start gap-3 p-3 text-xs sm:left-8 sm:top-24">
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
         <div className="space-y-1.5">
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-warning">
             {reason === 'context_lost'
-              ? 'Contexto WebGL interrumpido'
-              : 'Modo de compatibilidad sin WebGL'}
+              ? t.fallback.contextLostTitle
+              : t.fallback.unsupportedTitle}
           </p>
           <p className="text-text-secondary">
             {reason === 'context_lost'
-              ? 'El controlador gráfico reinició el contexto 3D. Puedes continuar navegando o reintentar el motor WebGL.'
-              : 'Este navegador o dispositivo no tiene aceleración WebGL activa. Se muestra la vista 2.5D de respaldo.'}
+              ? t.fallback.contextLostBody
+              : t.fallback.unsupportedBody}
           </p>
           {reason === 'context_lost' && (
             <Button
@@ -92,7 +91,7 @@ export function WebGLFallback({ reason }: { reason: 'unsupported' | 'context_los
               icon={<RefreshCw className="size-3.5" />}
               onClick={() => setContextLost(false)}
             >
-              Reintentar 3D
+              {t.fallback.retryBtn}
             </Button>
           )}
         </div>

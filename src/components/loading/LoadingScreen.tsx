@@ -1,20 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useProgress } from '@react-three/drei'
+import { useTranslations } from '@/i18n/translations'
 import { useNavigationStore } from '@/stores/navigation.store'
 import { cn } from '@/utils/cn'
 
 const MIN_MS = 1800
 const EXIT_MS = 800
 
-const STATUS = [
-  'Calibrando instrumentos',
-  'Sincronizando órbitas',
-  'Cargando cartografía estelar',
-  'Preparando lanzamiento',
-]
-
 /** Pantalla de carga: se mantiene un tiempo mínimo para evitar parpadeos. */
 export function LoadingScreen() {
+  const { t } = useTranslations()
   const isLoading = useNavigationStore((s) => s.state === 'loading')
   const assetProgress = useProgress((p) => p.progress)
   const [elapsed, setElapsed] = useState(0)
@@ -44,13 +39,14 @@ export function LoadingScreen() {
 
   const timed = Math.min(92, (elapsed / MIN_MS) * 92)
   const progress = done ? 100 : Math.max(assetProgress, timed)
-  const statusIndex = Math.min(STATUS.length - 1, Math.floor((progress / 100) * STATUS.length))
+  const statuses = t.loading.statuses
+  const statusIndex = Math.min(statuses.length - 1, Math.floor((progress / 100) * statuses.length))
 
   return (
     <div
       role="status"
       aria-live="polite"
-      aria-label="Cargando SOLARIS"
+      aria-label={t.loading.ariaLabel}
       className={cn(
         'fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg px-6 transition-opacity duration-700',
         done && 'pointer-events-none opacity-0',
@@ -85,7 +81,7 @@ export function LoadingScreen() {
           <div className="absolute inset-y-0 left-0 w-1/3 animate-scan bg-linear-to-r from-transparent via-cyan/60 to-transparent" />
         </div>
         <div className="mt-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-text-secondary">
-          <span>{STATUS[statusIndex]}</span>
+          <span>{statuses[statusIndex]}</span>
           <span className="text-text-primary">{String(Math.round(progress)).padStart(3, '0')}%</span>
         </div>
       </div>

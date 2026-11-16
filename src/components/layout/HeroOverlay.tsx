@@ -1,12 +1,15 @@
 import { ArrowRight } from 'lucide-react'
+import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { DataReadout } from '@/components/ui/DataReadout'
 import { Fade } from '@/components/ui/Fade'
-import { Badge } from '@/components/ui/Badge'
+import { useTranslations } from '@/i18n/translations'
 import { useNavigationStore } from '@/stores/navigation.store'
+import { formatDecimal, formatInt } from '@/utils/format'
 
 /** Hero sobre la Tierra: titular, CTA y telemetría orbital decorativa. */
 export function HeroOverlay() {
+  const { locale, t } = useTranslations()
   const state = useNavigationStore((s) => s.state)
   const enterSolarSystem = useNavigationStore((s) => s.enterSolarSystem)
   const visible = state === 'earth_hero'
@@ -22,16 +25,15 @@ export function HeroOverlay() {
         <div className="max-w-2xl">
           <Badge tone="teal" className="mb-5">
             <span className="size-1.5 animate-pulse-dot rounded-full bg-teal" aria-hidden="true" />
-            Expediciones espaciales · demo
+            {t.hero.badge}
           </Badge>
           <h1 className="text-4xl font-extralight leading-[1.05] tracking-tight text-text-primary sm:text-6xl lg:text-7xl">
-            El sistema solar
+            {t.hero.titleLine1}
             <br />
-            <span className="text-teal">te está esperando</span>
+            <span className="text-teal">{t.hero.titleLine2}</span>
           </h1>
           <p className="mt-5 max-w-lg text-sm leading-relaxed text-text-secondary sm:text-base">
-            Despega desde la Tierra, recorre el sistema solar y reserva una expedición a Mercurio,
-            Venus, Marte, Júpiter o Saturno. Experiencia ficticia de demostración.
+            {t.hero.description}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Button
@@ -40,30 +42,30 @@ export function HeroOverlay() {
               onClick={enterSolarSystem}
               icon={<ArrowRight className="order-last size-5" />}
             >
-              Explore solar system
+              {t.hero.cta}
             </Button>
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-text-secondary">
-              6 destinos · 5 mundos
+              {t.hero.subtitle}
             </span>
           </div>
         </div>
 
         <dl
-          aria-label="Telemetría orbital simulada"
+          aria-label={t.hero.telemetryAria}
           className="hud-panel hidden w-full max-w-md grid-cols-3 gap-5 p-5 sm:grid lg:mb-1"
         >
-          <DataReadout label="Altitud" value="408" unit="km" ratio={0.35} />
-          <DataReadout label="Velocidad" value="7,66" unit="km/s" ratio={0.7} />
-          <DataReadout label="Órbita" value="92,7" unit="min" ratio={0.5} />
+          <DataReadout label={t.hero.altitude} value={formatInt(408, locale)} unit="km" ratio={0.35} />
+          <DataReadout label={t.hero.velocity} value={formatDecimal(7.66, locale)} unit="km/s" ratio={0.7} />
+          <DataReadout label={t.hero.orbit} value={formatDecimal(92.7, locale)} unit="min" ratio={0.5} />
           <p className="col-span-3 font-mono text-[9px] uppercase tracking-[0.22em] text-text-secondary/70">
-            Telemetría simulada · Texturas:{' '}
+            {t.hero.telemetryNote}{' '}
             <a
               href="https://www.solarsystemscope.com/textures/"
               target="_blank"
               rel="noreferrer"
               className="pointer-events-auto underline decoration-teal/40 hover:text-teal"
             >
-              Solar System Scope (CC BY 4.0)
+              {t.hero.texturesCredit}
             </a>{' '}
             / NASA
           </p>
@@ -72,4 +74,3 @@ export function HeroOverlay() {
     </Fade>
   )
 }
-

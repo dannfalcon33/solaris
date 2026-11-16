@@ -1,5 +1,6 @@
 import { Check, Clock, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { useTranslations } from '@/i18n/translations'
 import type { ExpeditionPackage } from '@/types'
 import { formatUsd } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -14,6 +15,8 @@ interface TierCardProps {
 
 /** Tarjeta de paquete comercial por destino (Explorer / Voyager / Infinity). Datos ficticios. */
 export function TierCard({ pkg, selected, onSelect, onDetails, onBook }: TierCardProps) {
+  const { locale, t } = useTranslations()
+
   return (
     <article
       className={cn(
@@ -41,20 +44,20 @@ export function TierCard({ pkg, selected, onSelect, onDetails, onBook }: TierCar
           </div>
           <div className="shrink-0 text-right">
             <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-warning">
-              Demo · /pers.
+              {t.commercial.demoPerPerson}
             </p>
-            <p className="font-mono text-base text-teal">{formatUsd(pkg.priceUsd)}</p>
+            <p className="font-mono text-base text-teal">{formatUsd(pkg.priceUsd, locale)}</p>
           </div>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-text-secondary">
           <span className="flex items-center gap-1.5">
             <Clock className="size-3 text-teal/80" />
-            {pkg.durationDays} días (sim.)
+            {pkg.durationDays} {t.commercial.daysSim}
           </span>
           <span className="flex items-center gap-1.5">
             <Users className="size-3 text-teal/80" />
-            {pkg.availableSeats} plazas (sim.)
+            {pkg.availableSeats} {t.commercial.seatsSim}
           </span>
         </div>
 
@@ -75,18 +78,18 @@ export function TierCard({ pkg, selected, onSelect, onDetails, onBook }: TierCar
           variant="ghost"
           size="sm"
           onClick={onDetails}
-          aria-label={`Ver detalles de ${pkg.name}`}
+          aria-label={`${t.commercial.detailsAriaPrefix} ${pkg.name}`}
         >
-          Detalles
+          {t.commercial.detailsBtn}
         </Button>
         {selected && (
           <Button
             variant="outline"
             size="sm"
             onClick={onBook}
-            aria-label={`Reservar ${pkg.name}`}
+            aria-label={`${t.commercial.bookAriaPrefix} ${pkg.name}`}
           >
-            Reservar
+            {t.commercial.bookBtn}
           </Button>
         )}
       </div>

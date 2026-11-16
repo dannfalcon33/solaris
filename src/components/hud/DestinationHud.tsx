@@ -14,13 +14,16 @@ import { Button } from '@/components/ui/Button'
 import { DataReadout } from '@/components/ui/DataReadout'
 import { Fade } from '@/components/ui/Fade'
 import { getDestination } from '@/data/destinations'
+import { useTranslations, type UiTranslations } from '@/i18n/translations'
 import { useNavigationStore } from '@/stores/navigation.store'
+import type { Locale } from '@/stores/ui.store'
 import { formatDecimal, formatInt, formatOrbit, formatRotation } from '@/utils/format'
 
 const EARTH_G = 9.81
 
 /** HUD izquierdo: datos del destino seleccionado. */
 export function DestinationHud() {
+  const { locale, t } = useTranslations()
   const state = useNavigationStore((s) => s.state)
   const id = useNavigationStore((s) => s.selectedDestinationId)
   const isTransitioning = useNavigationStore((s) => s.isTransitioning)
@@ -28,7 +31,7 @@ export function DestinationHud() {
   const returnToEarth = useNavigationStore((s) => s.returnToEarth)
 
   const visible = state === 'planet_detail' || state === 'station_detail'
-  const destination = id ? getDestination(id) : null
+  const destination = id ? getDestination(id, locale) : null
 
   return (
     <Fade
@@ -39,6 +42,8 @@ export function DestinationHud() {
       {destination && (
         <HudContent
           destination={destination}
+          locale={locale}
+          t={t.hud}
           disabled={isTransitioning}
           onBack={returnToSolarSystem}
           onHome={returnToEarth}
@@ -50,28 +55,32 @@ export function DestinationHud() {
 
 function HudContent({
   destination,
+  locale,
+  t,
   disabled,
   onBack,
   onHome,
 }: {
   destination: ReturnType<typeof getDestination>
+  locale: Locale
+  t: UiTranslations['hud']
   disabled: boolean
   onBack: () => void
   onHome: () => void
 }) {
   const { science: s } = destination
-  const rotation = formatRotation(s.rotationPeriodHours)
-  const orbit = formatOrbit(s.orbitalPeriodDays)
+  const rotation = formatRotation(s.rotationPeriodHours, locale)
+  const orbit = formatOrbit(s.orbitalPeriodDays, locale)
   const isStation = destination.kind === 'station'
 
   return (
-    <section aria-label={`Datos de ${destination.name}`} className="hud-panel p-4 sm:p-5">
+    <section aria-label={`${t.sectionAriaPrefix} ${destination.name}`} className="hud-panel p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Badge tone="teal">
           {isStation ? <Satellite className="size-3" /> : <Globe className="size-3" />}
-          {isStation ? 'Estación orbital' : 'Expedición planetaria'}
+          {isStation ? t.orbitalStation : t.planetaryExpedition}
         </Badge>
-        {destination.isFictional && <Badge tone="warning">Instalación ficticia</Badge>}
+        {destination.isFictional && <Badge tone="warning">{t.fictionalFacilityBadge}</Badge>}
       </div>
 
       <h2 className="text-3xl font-extralight tracking-wide text-text-primary">{destination.bodyName}</h2>
@@ -82,7 +91,7 @@ function HudContent({
 
       <div className="mt-3 border border-teal/20 bg-white/[0.02] p-2.5">
         <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-warning">
-          Instalación orbital (ficción)
+          {t.orbitalFacilityHeader}
         </p>
         <p className="mt-0.5 text-xs font-medium text-text-primary">{destination.facility.facilityName}</p>
         <p className="mt-0.5 font-mono text-[10px] text-text-secondary">{destination.facility.orbitProfile}</p>
@@ -90,44 +99,44 @@ function HudContent({
 
       <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.25em] text-text-secondary">
         <span className="size-1.5 rounded-full bg-teal" aria-hidden="true" />
-        Datos astronómicos reales
+        {t.realAstroDataHeader}
       </div>
 
       <dl className="mt-3 grid grid-cols-3 gap-x-4 gap-y-4 lg:grid-cols-2">
         <DataReadout
           icon={<Ruler />}
-          label="Diámetro"
-          value={formatInt(s.diameterKm)}
+          label={t.diameter}
+          value={formatInt(s.diameterKm, locale)}
           unit="km"
           ratio={s.diameterKm / 139820}
         />
         <DataReadout
           icon={<Sun />}
-          label="Dist. al Sol"
-          value={formatDecimal(s.distanceFromSunMkm)}
+          label={t.distFromSun}
+          value={formatDecimal(s.distanceFromSunMkm, locale)}
           unit="M km"
           ratio={s.distanceFromSunMkm / 1434}
         />
         <DataReadout
           icon={<Gauge />}
-          label="Gravedad"
-          value={formatDecimal(s.gravityMs2)}
+          label={t.gravity}
+          value={formatDecimal(s.gravityMs2, locale)}
           unit="m/s²"
           ratio={s.gravityMs2 / (EARTH_G * 2.6)}
         />
         <DataReadout
           icon={<Timer />}
-          label="Día"
+          label={t.day}
           value={rotation.value}
           unit={rotation.unit}
-          note={rotation.retrograde ? 'retrógrado' : undefined}
+          note={rotation.retrograde ? t.retrograde : undefined}
           className="hidden lg:flex"
         />
-        <DataReadout icon={<Orbit />} label="Año" value={orbit.value} unit={orbit.unit} className="hidden lg:flex" />
+        <DataReadout icon={<Orbit />} label={t.year} value={orbit.value} unit={orbit.unit} className="hidden lg:flex" />
         <DataReadout
           icon={<Thermometer />}
-          label="Temp. media"
-          value={formatInt(s.meanTemperatureC)}
+          label={t.meanTemp}
+          value={formatInt(s.meanTemperatureC, locale)}
           unit="°C"
           className="hidden lg:flex"
         />
@@ -142,7 +151,7 @@ function HudContent({
           disabled={disabled}
           className="w-full"
         >
-          Volver al sistema solar
+          {t.backToSolarSystem}
         </Button>
         <Button
           variant="ghost"
@@ -152,10 +161,9 @@ function HudContent({
           disabled={disabled}
           className="w-full"
         >
-          Regresar a la Tierra
+          {t.backToEarth}
         </Button>
       </div>
     </section>
   )
 }
-

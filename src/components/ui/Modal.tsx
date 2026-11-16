@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 interface ModalProps {
   title: string
   eyebrow?: string
+  closeLabel?: string
   onClose: () => void
   children: ReactNode
 }
@@ -12,7 +13,7 @@ const FOCUSABLE =
   'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
 
 /** Diálogo accesible: Esc para cerrar, foco atrapado y restaurado. */
-export function Modal({ title, eyebrow, onClose, children }: ModalProps) {
+export function Modal({ title, eyebrow, closeLabel = 'Cerrar', onClose, children }: ModalProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
@@ -80,7 +81,7 @@ export function Modal({ title, eyebrow, onClose, children }: ModalProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={closeLabel}
             className="-mr-2 -mt-1 p-2 text-text-secondary transition hover:text-text-primary focus-visible:outline-2 focus-visible:outline-cyan"
           >
             <X className="size-5" />
