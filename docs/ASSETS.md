@@ -51,3 +51,20 @@ El manifiesto completo de tamaños exactos en bytes se genera automáticamente e
 ### Estrategia de memoria GPU (VRAM)
 - Todos los cuerpos cargan inicialmente el nivel `2k` (~3,16 MB en total para todo el sistema solar), garantizando que la vista general del sistema solar sea instantánea.
 - Únicamente el planeta que se encuentra **en primer plano** (`useIsBodyFocused`) solicita y mantiene en VRAM el paquete `8k` (o `4k` según el perfil de hardware), liberando automáticamente la textura `8k` al cambiar a otro destino.
+
+---
+
+## 4. Modelos 3D de estaciones e instalaciones orbitales (`public/models/*.glb` — FASE 4)
+
+- **Procedencia / Autor:** Autoría propia del proyecto (*SOLARIS Interplanetary Pipeline*), generados de forma reproducible mediante `scripts/build-models.mjs` (`npm run models`).
+- **Formato:** glTF 2.0 binario (`.glb`) con materiales PBR (`pbrMetallicRoughness` + `emissiveFactor`) y nodos jerárquicos (`station_body` y `rotor_ring` para rotación de gravedad artificial).
+- **Licencia:** CC0 1.0 / MIT (primera parte, sin restricciones de uso comercial ni atribución de terceros).
+
+| Archivo `.glb` | Destino | Tamaño | Triángulos | Ubicación y función en escena |
+|---|---|---|---|---|
+| `mercury-shield-station.glb` | `mercury-solar-frontier` | 197,3 KB | 2.748 | Estación orbital con escudo térmico multicapa dorado orientado al Sol + domos en cráteres del terminador |
+| `venus-cloud-haven.glb` | `venus-cloud-haven` | 446,9 KB | 6.296 | Complejo aerostático/orbital de bronce y titanio sobre la cubierta nubosa alta de Venus |
+| `mars-orbital-hub.glb` | `mars-red-frontier` | 232,5 KB | 3.244 | Terminal orbital con anillo centrífugo y paneles solares + red de biodomos en superficie marciana |
+| `jupiter-europa-station.glb` | `jupiter-europa-station` | 389,1 KB | 5.476 | Estación de espacio profundo con doble anillo centrífugo en órbita joviana exterior, junto a la luna **Europa** |
+| `saturn-titan-station.glb` | `saturn-titan-station` | 294,0 KB | 4.124 | Santuario orbital en órbita exterior de Saturno con antena hacia **Titán** y vista a su atmósfera dorada/azul |
+| `saturn-ring-observatory.glb` | `saturn-ring-observation` | 210,8 KB | 2.948 | Observatorio orbital elevado sobre el plano de los anillos de Saturno frente a la División de Cassini |

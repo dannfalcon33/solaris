@@ -37,6 +37,13 @@ export interface ScientificData {
   meanTemperatureC: number
 }
 
+/** Datos de la instalación orbital o colonia ficticia del destino (FASE 4). */
+export interface FacilityTelemetry {
+  facilityName: string
+  orbitProfile: string
+  featureHighlight: string
+}
+
 export interface Destination {
   id: DestinationId
   /** Cuerpo celeste real al que pertenece el destino. */
@@ -52,6 +59,7 @@ export interface Destination {
   description: string
   /** `true` si la instalación/experiencia es ficción (estaciones, colonias). */
   isFictional: boolean
+  facility: FacilityTelemetry
   science: ScientificData
 }
 

@@ -4,7 +4,7 @@ Experiencia web 3D ficticia de turismo espacial (React + Three.js + WebGL).
 Plan completo: [`SOLARIS_ENGINEERING_PLAN.md`](./SOLARIS_ENGINEERING_PLAN.md).
 Registro de texturas y licencias: [`docs/ASSETS.md`](./docs/ASSETS.md).
 
-**Estado:** FASE 3 — navegación y cámara cinematográfica con GSAP, puntos de cámara por destino y selección interactiva en 3D y HUD.
+**Estado:** FASE 4 — experiencias de destino, estaciones orbitales 3D (`.glb`), lunas acompañantes (**Europa** y **Titán**) y colonias en superficie.
 
 ## Requisitos
 

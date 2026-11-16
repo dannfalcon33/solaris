@@ -80,6 +80,14 @@ function HudContent({
       </p>
       <p className="mt-3 hidden text-sm leading-relaxed text-text-secondary sm:block">{destination.tagline}</p>
 
+      <div className="mt-3 border border-teal/20 bg-white/[0.02] p-2.5">
+        <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-warning">
+          Instalación orbital (ficción)
+        </p>
+        <p className="mt-0.5 text-xs font-medium text-text-primary">{destination.facility.facilityName}</p>
+        <p className="mt-0.5 font-mono text-[10px] text-text-secondary">{destination.facility.orbitProfile}</p>
+      </div>
+
       <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-3 font-mono text-[9px] uppercase tracking-[0.25em] text-text-secondary">
         <span className="size-1.5 rounded-full bg-teal" aria-hidden="true" />
         Datos astronómicos reales

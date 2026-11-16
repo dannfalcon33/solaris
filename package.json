@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
-    "textures": "node scripts/build-textures.mjs"
+    "textures": "node scripts/build-textures.mjs",
+    "models": "node scripts/build-models.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
