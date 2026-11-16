@@ -3,41 +3,25 @@ import type { DestinationId } from './destination'
 export type PackageTier = 'explorer' | 'voyager' | 'infinity'
 
 /**
- * Definición genérica de categoría (Explorer / Voyager / Infinity) usada por
- * las tarjetas de la FASE 1. Contenido de demostración.
- */
-export interface TierDefinition {
-  tier: PackageTier
-  name: string
-  tagline: string
-  /** Precio "desde" ficticio en USD. */
-  fromPriceUsd: number
-  durationDays: number
-  lodging: string
-  highlights: string[]
-  services: string[]
-  activities: string[]
-  /** Plazas simuladas. */
-  demoSeats: number
-}
-
-/**
- * Paquete comercial. Todo el contenido es ficticio y de demostración
- * (precios, duración y disponibilidad).
+ * Paquete comercial específico por destino (FASE 5).
+ * Todo el contenido (precios, duraciones y plazas) es ficticio y de demostración.
  */
 export interface ExpeditionPackage {
   id: string
   tier: PackageTier
+  tierLabel: 'Explorer' | 'Voyager' | 'Infinity'
   destinationId: DestinationId
   name: string
-  /** Precio ficticio en USD. */
+  tagline: string
+  /** Precio ficticio por persona en USD. */
   priceUsd: number
+  /** Duración ficticia total de la misión en días. */
   durationDays: number
   description: string
   lodging: string
+  highlights: string[]
   services: string[]
   activities: string[]
   /** Plazas simuladas disponibles. */
   availableSeats: number
 }
-

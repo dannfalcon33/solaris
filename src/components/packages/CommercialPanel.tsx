@@ -1,17 +1,17 @@
-import { ChevronDown, ChevronUp, Rocket } from 'lucide-react'
+import { Columns3, ChevronDown, ChevronUp, Rocket } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Fade } from '@/components/ui/Fade'
 import { getDestination } from '@/data/destinations'
-import { tiers } from '@/data/tiers'
+import { getPackagesByDestination } from '@/data/packages'
 import { useNavigationStore } from '@/stores/navigation.store'
 import { useUiStore } from '@/stores/ui.store'
 import { cn } from '@/utils/cn'
 import { TierCard } from './TierCard'
 
 /**
- * Panel comercial: columna derecha en escritorio, bottom sheet plegable en
- * pantallas pequeñas (por encima de la barra de destinos).
+ * Panel comercial sincronizado con el destino seleccionado (FASE 5):
+ * columna derecha en escritorio, bottom sheet plegable en pantallas pequeñas.
  */
 export function CommercialPanel() {
   const state = useNavigationStore((s) => s.state)
@@ -24,20 +24,23 @@ export function CommercialPanel() {
 
   const visible = state === 'planet_detail' || state === 'station_detail'
   const destination = id ? getDestination(id) : null
+  const destinationPackages = destination ? getPackagesByDestination(destination.id) : []
 
   return (
     <Fade
       show={visible && destination !== null}
       from="right"
-      className="absolute inset-x-3 bottom-[7.5rem] z-10 sm:inset-x-8 lg:inset-x-auto lg:bottom-32 lg:right-8 lg:top-24 lg:w-[26rem]"
+      className="absolute inset-x-3 bottom-[7.5rem] z-10 sm:inset-x-8 lg:inset-x-auto lg:bottom-32 lg:right-8 lg:top-24 lg:w-[27rem]"
     >
       <section
         aria-label="Paquetes de expedición"
-        className="hud-panel flex max-h-[min(52svh,34rem)] flex-col lg:h-full lg:max-h-none"
+        className="hud-panel flex max-h-[min(54svh,36rem)] flex-col lg:h-full lg:max-h-none"
       >
         <header className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-teal">Expediciones</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-teal">
+              Catálogo · {destination?.bodyName}
+            </p>
             <h2 className="truncate text-sm font-light tracking-wide text-text-primary">
               {destination?.experienceName}
             </h2>
@@ -64,13 +67,14 @@ export function CommercialPanel() {
             sheetOpen ? 'flex' : 'hidden lg:flex',
           )}
         >
-          {tiers.map((tier) => (
+          {destinationPackages.map((pkg) => (
             <TierCard
-              key={tier.tier}
-              tier={tier}
-              selected={tier.tier === selectedTier}
-              onSelect={() => selectTier(tier.tier)}
-              onDetails={() => openBooking(tier.tier, 'details')}
+              key={pkg.id}
+              pkg={pkg}
+              selected={pkg.tier === selectedTier}
+              onSelect={() => selectTier(pkg.tier)}
+              onDetails={() => openBooking(pkg.tier, 'details')}
+              onBook={() => openBooking(pkg.tier, 'form')}
             />
           ))}
           <p className="font-mono text-[9px] uppercase leading-relaxed tracking-[0.2em] text-text-secondary/70">
@@ -78,7 +82,21 @@ export function CommercialPanel() {
           </p>
         </div>
 
-        <footer className={cn('border-t border-white/10 p-4', sheetOpen ? 'block' : 'hidden lg:block')}>
+        <footer
+          className={cn(
+            'flex flex-col gap-2 border-t border-white/10 p-4',
+            sheetOpen ? 'flex' : 'hidden lg:flex',
+          )}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            icon={<Columns3 className="size-3.5" />}
+            onClick={() => openBooking(selectedTier, 'compare')}
+          >
+            Comparar categorías
+          </Button>
           <Button
             variant="primary"
             size="md"
@@ -93,4 +111,3 @@ export function CommercialPanel() {
     </Fade>
   )
 }
-

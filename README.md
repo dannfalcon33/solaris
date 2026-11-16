@@ -4,7 +4,7 @@ Experiencia web 3D ficticia de turismo espacial (React + Three.js + WebGL).
 Plan completo: [`SOLARIS_ENGINEERING_PLAN.md`](./SOLARIS_ENGINEERING_PLAN.md).
 Registro de texturas y licencias: [`docs/ASSETS.md`](./docs/ASSETS.md).
 
-**Estado:** FASE 4 — experiencias de destino, estaciones orbitales 3D (`.glb`), lunas acompañantes (**Europa** y **Titán**) y colonias en superficie.
+**Estado:** FASE 5 — catálogo comercial completo por destino (18 paquetes tipados Explorer, Voyager e Infinity), comparador de categorías y reserva simulada con pase de embarque.
 
 ## Requisitos
 
@@ -38,7 +38,4 @@ Registro de texturas y licencias: [`docs/ASSETS.md`](./docs/ASSETS.md).
   - `engine/textures/`: carga progresiva (`2k` inmediato por Suspense → `4k/8k` bajo demanda para el planeta activo, con liberación automática de VRAM).
 - **Capa UI** (`src/components/`): HTML/CSS superpuesto (`z-10`).
 - **Estado** (`src/stores/navigation.store.ts` y `src/stores/ui.store.ts`).
-
-## Placeholders pendientes de fases posteriores
-
-- `data/tiers.ts` — categorías genéricas con datos ficticios → catálogo específico por destino en la **FASE 5**.
+- **Datos comerciales** (`src/data/destinations.ts` y `src/data/packages.ts`): 6 destinos y 18 paquetes tipados independientes de los componentes.

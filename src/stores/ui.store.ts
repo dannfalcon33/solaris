@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import type { PackageTier } from '@/types'
 
-export type BookingStep = 'details' | 'form' | 'done'
+export type BookingStep = 'details' | 'compare' | 'form' | 'done'
 
 interface UiStore {
   /** Categoría resaltada en el panel comercial. */
   selectedTier: PackageTier
-  /** Modal de detalles/reserva: `null` = cerrado. */
+  /** Modal de detalles/comparador/reserva: `null` = cerrado. */
   booking: { tier: PackageTier; step: BookingStep } | null
   /** Panel comercial desplegado en pantallas pequeñas (bottom sheet). */
   sheetOpen: boolean
@@ -28,4 +28,3 @@ export const useUiStore = create<UiStore>((set) => ({
   closeBooking: () => set({ booking: null }),
   setSheetOpen: (open) => set({ sheetOpen: open }),
 }))
-
