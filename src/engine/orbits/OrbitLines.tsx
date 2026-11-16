@@ -8,25 +8,38 @@ import {
   LineLoop,
 } from 'three'
 import { BODIES, PLANET_ORDER } from '@/engine/config/solarSystemLayout'
-import { useNavigationStore } from '@/stores/navigation.store'
+import { useNavigationStore, type SelectableBodyId } from '@/stores/navigation.store'
 
 const SEGMENTS = 256
 
 interface OrbitRingEntry {
-  id: string
+  id: SelectableBodyId
   line: LineLoop
   geometry: BufferGeometry
   material: LineBasicMaterial
 }
 
+function syncOrbitHighlight(
+  rings: OrbitRingEntry[],
+  hoveredBodyId: SelectableBodyId | null,
+): void {
+  for (const r of rings) {
+    r.material.opacity = r.id === hoveredBodyId ? 1.0 : hoveredBodyId ? 0.45 : 0.8
+  }
+}
+
 /**
  * Órbitas visuales en el plano de la eclíptica. Cada órbita modula su
  * intensidad angularmente con un realce suave cerca de la posición actual del
- * planeta, evitando saturar la escena con líneas neón uniformes.
- * Se muestran en la vista general del sistema solar.
+ * planeta y se ilumina al pasar el cursor por el planeta o su destino en el HUD.
  */
 export function OrbitLines() {
-  const show = useNavigationStore((s) => s.state === 'solar_system')
+  const show = useNavigationStore(
+    (s) =>
+      s.state === 'solar_system' ||
+      (s.state === 'transitioning' && s.transitionGoal === 'solar_system'),
+  )
+  const hoveredBodyId = useNavigationStore((s) => s.hoveredBodyId)
 
   const rings = useMemo<OrbitRingEntry[]>(() => {
     return PLANET_ORDER.map((id) => {
@@ -41,13 +54,12 @@ export function OrbitLines() {
         positions[i * 3 + 1] = 0
         positions[i * 3 + 2] = Math.sin(theta) * cfg.orbitRadius
 
-        // Mayor intensidad cerca de la posición orbital del planeta.
         const delta = Math.atan2(
           Math.sin(theta - cfg.orbitAngle),
           Math.cos(theta - cfg.orbitAngle),
         )
         const highlight = Math.exp(-(delta * delta) / 0.45)
-        const intensity = 0.14 + 0.52 * highlight
+        const intensity = 0.14 + 0.56 * highlight
 
         colors[i * 3] = baseColor.r * intensity
         colors[i * 3 + 1] = baseColor.g * intensity
@@ -61,7 +73,7 @@ export function OrbitLines() {
       const material = new LineBasicMaterial({
         vertexColors: true,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.8,
         blending: AdditiveBlending,
         depthWrite: false,
       })
@@ -71,6 +83,10 @@ export function OrbitLines() {
       return { id, line, geometry, material }
     })
   }, [])
+
+  useLayoutEffect(() => {
+    syncOrbitHighlight(rings, hoveredBodyId)
+  }, [rings, hoveredBodyId])
 
   useLayoutEffect(
     () => () => {

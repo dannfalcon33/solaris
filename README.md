@@ -4,7 +4,7 @@ Experiencia web 3D ficticia de turismo espacial (React + Three.js + WebGL).
 Plan completo: [`SOLARIS_ENGINEERING_PLAN.md`](./SOLARIS_ENGINEERING_PLAN.md).
 Registro de texturas y licencias: [`docs/ASSETS.md`](./docs/ASSETS.md).
 
-**Estado:** FASE 2 (2A + 2B) — motor planetario realista completo (Tierra, Sol, Mercurio, Venus, Marte, Júpiter, Saturno con anillos, órbitas visuales y campo estelar).
+**Estado:** FASE 3 — navegación y cámara cinematográfica con GSAP, puntos de cámara por destino y selección interactiva en 3D y HUD.
 
 ## Requisitos
 
@@ -41,5 +41,4 @@ Registro de texturas y licencias: [`docs/ASSETS.md`](./docs/ASSETS.md).
 
 ## Placeholders pendientes de fases posteriores
 
-- `hooks/usePlaceholderTransition.ts` — temporizador de transición → se reemplaza por timelines cinematográficos GSAP en la **FASE 3**.
 - `data/tiers.ts` — categorías genéricas con datos ficticios → catálogo específico por destino en la **FASE 5**.

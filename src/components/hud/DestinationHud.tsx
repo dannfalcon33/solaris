@@ -23,7 +23,9 @@ const EARTH_G = 9.81
 export function DestinationHud() {
   const state = useNavigationStore((s) => s.state)
   const id = useNavigationStore((s) => s.selectedDestinationId)
+  const isTransitioning = useNavigationStore((s) => s.isTransitioning)
   const returnToSolarSystem = useNavigationStore((s) => s.returnToSolarSystem)
+  const returnToEarth = useNavigationStore((s) => s.returnToEarth)
 
   const visible = state === 'planet_detail' || state === 'station_detail'
   const destination = id ? getDestination(id) : null
@@ -34,17 +36,28 @@ export function DestinationHud() {
       from="left"
       className="absolute inset-x-4 top-20 z-10 sm:top-24 lg:inset-x-auto lg:left-8 lg:w-80"
     >
-      {destination && <HudContent destination={destination} onBack={returnToSolarSystem} />}
+      {destination && (
+        <HudContent
+          destination={destination}
+          disabled={isTransitioning}
+          onBack={returnToSolarSystem}
+          onHome={returnToEarth}
+        />
+      )}
     </Fade>
   )
 }
 
 function HudContent({
   destination,
+  disabled,
   onBack,
+  onHome,
 }: {
   destination: ReturnType<typeof getDestination>
+  disabled: boolean
   onBack: () => void
+  onHome: () => void
 }) {
   const { science: s } = destination
   const rotation = formatRotation(s.rotationPeriodHours)
@@ -112,9 +125,28 @@ function HudContent({
         />
       </dl>
 
-      <Button variant="outline" size="sm" icon={<ArrowLeft className="size-4" />} onClick={onBack} className="mt-5 w-full">
-        Volver al sistema solar
-      </Button>
+      <div className="mt-5 flex flex-col gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          icon={<ArrowLeft className="size-4" />}
+          onClick={onBack}
+          disabled={disabled}
+          className="w-full"
+        >
+          Volver al sistema solar
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<Globe className="size-3.5" />}
+          onClick={onHome}
+          disabled={disabled}
+          className="w-full"
+        >
+          Regresar a la Tierra
+        </Button>
+      </div>
     </section>
   )
 }

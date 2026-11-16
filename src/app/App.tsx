@@ -6,17 +6,14 @@ import { DestinationBar } from '@/components/destinations/DestinationBar'
 import { CommercialPanel } from '@/components/packages/CommercialPanel'
 import { BookingModal } from '@/components/packages/BookingModal'
 import { LoadingScreen } from '@/components/loading/LoadingScreen'
-import { usePlaceholderTransition } from '@/hooks/usePlaceholderTransition'
 
 /**
  * Raíz de la aplicación: capa 3D (canvas) y capa HTML (UI) desacopladas.
  * La UI se superpone al canvas con CSS; comparten solo el store de navegación.
  * `main` no captura el puntero: solo los controles lo hacen, de modo que la
- * selección directa de planetas (FASE 3) siga llegando al canvas.
+ * selección directa de planetas (FASE 3) llegue al canvas.
  */
 export default function App() {
-  usePlaceholderTransition()
-
   return (
     <>
       <SceneCanvas />
