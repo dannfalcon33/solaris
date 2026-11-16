@@ -257,8 +257,13 @@ function createMercuryStation() {
   ])
 
   const rotor = merge([
-    xform(new TorusGeometry(0.56, 0.055, 14, 36), { pos: [0, 0, -0.25] }),
-    xform(new BoxGeometry(1.1, 0.04, 0.04), { pos: [0, 0, -0.25] }),
+    xform(new TorusGeometry(0.58, 0.055, 16, 40), { pos: [0, 0, -0.25] }),
+    xform(new BoxGeometry(1.12, 0.045, 0.045), { pos: [0, 0, -0.25] }),
+    xform(new BoxGeometry(0.045, 1.12, 0.045), { pos: [0, 0, -0.25] }),
+    xform(new BoxGeometry(0.14, 0.22, 0.14), { pos: [0, 0.58, -0.25] }),
+    xform(new BoxGeometry(0.14, 0.22, 0.14), { pos: [0, -0.58, -0.25] }),
+    xform(new BoxGeometry(0.22, 0.14, 0.14), { pos: [0.58, 0, -0.25] }),
+    xform(new BoxGeometry(0.22, 0.14, 0.14), { pos: [-0.58, 0, -0.25] }),
   ])
 
   const beacons = merge([
@@ -363,6 +368,10 @@ function createMarsStation() {
     xform(new TorusGeometry(0.78, 0.075, 16, 44), { rot: [0, Math.PI / 2, 0], pos: [0.05, 0, 0] }),
     xform(new BoxGeometry(0.05, 1.52, 0.05), { pos: [0.05, 0, 0] }),
     xform(new BoxGeometry(0.05, 0.05, 1.52), { pos: [0.05, 0, 0] }),
+    xform(new BoxGeometry(0.16, 0.24, 0.16), { pos: [0.05, 0.78, 0] }),
+    xform(new BoxGeometry(0.16, 0.24, 0.16), { pos: [0.05, -0.78, 0] }),
+    xform(new BoxGeometry(0.16, 0.16, 0.24), { pos: [0.05, 0, 0.78] }),
+    xform(new BoxGeometry(0.16, 0.16, 0.24), { pos: [0.05, 0, -0.78] }),
   ])
 
   const rotorLights = xform(new TorusGeometry(0.86, 0.014, 8, 44), {

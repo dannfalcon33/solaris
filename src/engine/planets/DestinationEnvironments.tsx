@@ -41,6 +41,8 @@ interface StationPlacementSpec {
   scaleFactor: number
   tilt: [number, number, number]
   faceSun?: boolean
+  /** Eje local alrededor del cual gira coaxialmente el anillo centrífugo. */
+  rotorAxis: 'x' | 'y' | 'z'
   rotorSpeed: number
   bounceColor: string
 }
@@ -55,7 +57,8 @@ const STATION_SPECS: readonly StationPlacementSpec[] = [
     scaleFactor: 0.042,
     tilt: [0.15, -0.35, 0.08],
     faceSun: true,
-    rotorSpeed: 0.45,
+    rotorAxis: 'z',
+    rotorSpeed: 0.55,
     bounceColor: '#d8c5b0',
   },
   {
@@ -66,6 +69,7 @@ const STATION_SPECS: readonly StationPlacementSpec[] = [
     yFactor: -0.02,
     scaleFactor: 0.04,
     tilt: [0.18, 0.4, -0.12],
+    rotorAxis: 'y',
     rotorSpeed: 0.32,
     bounceColor: '#f2c478',
   },
@@ -77,7 +81,8 @@ const STATION_SPECS: readonly StationPlacementSpec[] = [
     yFactor: -0.028,
     scaleFactor: 0.042,
     tilt: [0.22, -0.5, 0.14],
-    rotorSpeed: 0.52,
+    rotorAxis: 'x',
+    rotorSpeed: 0.55,
     bounceColor: '#e07a48',
   },
   {
@@ -88,6 +93,7 @@ const STATION_SPECS: readonly StationPlacementSpec[] = [
     yFactor: -0.02,
     scaleFactor: 0.038,
     tilt: [0.2, 0.35, -0.18],
+    rotorAxis: 'y',
     rotorSpeed: 0.38,
     bounceColor: '#deb88a',
   },
@@ -99,6 +105,7 @@ const STATION_SPECS: readonly StationPlacementSpec[] = [
     yFactor: -0.032,
     scaleFactor: 0.036,
     tilt: [0.16, -0.38, 0.15],
+    rotorAxis: 'y',
     rotorSpeed: 0.36,
     bounceColor: '#e8cf98',
   },
@@ -110,6 +117,7 @@ const STATION_SPECS: readonly StationPlacementSpec[] = [
     yFactor: -0.03,
     scaleFactor: 0.042,
     tilt: [0.42, 0.28, -0.1],
+    rotorAxis: 'y',
     rotorSpeed: 0.3,
     bounceColor: '#f0dfba',
   },
@@ -186,13 +194,14 @@ function orientObjectToSun(obj: Object3D, sunDir: Vector3, tilt: [number, number
 function animateStationInstance(
   holder: Group | null,
   rotor: Object3D | undefined,
+  rotorAxis: 'x' | 'y' | 'z',
   rotorSpeed: number,
   time: number,
   dt: number,
   index: number,
 ): void {
   if (rotor) {
-    rotor.rotation.y += dt * rotorSpeed
+    rotor.rotation[rotorAxis] += dt * rotorSpeed
   }
   if (holder) {
     holder.position.y = Math.sin(time * 0.75 + index * 1.3) * 0.035
@@ -632,6 +641,7 @@ export function DestinationEnvironments() {
       animateStationInstance(
         holderRefs.current[inst.spec.destinationId] ?? null,
         inst.rotor,
+        inst.spec.rotorAxis,
         inst.spec.rotorSpeed,
         timeRef.current,
         dt,
